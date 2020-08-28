@@ -1,0 +1,14 @@
+/* 
+* Everything related to the main container
+*/
+
+.container {
+    max-width: 80rem; // 800px
+    margin: 0 auto;
+    padding: 5rem 0;
+
+    @include responsive(850px) {
+        padding: 2.5rem;
+        margin: unset;
+    }
+}

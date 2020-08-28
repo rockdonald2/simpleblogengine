@@ -1,0 +1,30 @@
+/* 
+* Everything related to the login page
+*/
+
+.login {
+    form {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+
+        input:not(:first-of-type) {
+            margin-top: 1rem;
+        }
+
+        input[type="email"],
+        input[type="password"] {
+            font-size: $medium-font;
+            padding: 1rem;
+            background-color: rgba(#fffcf6, .1);
+            border: $link-color 1px solid;
+            border-radius: 5px;
+        }
+
+        input[type="email"],
+        input[type="password"],
+        input[type="submit"] {
+            width: 100%;
+        }
+    }
+}

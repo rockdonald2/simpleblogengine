@@ -1,0 +1,10 @@
+/* 
+* All mixins in this file,
+* BP is a general variable, should be given in pixels
+*/
+
+@mixin responsive($bp) {
+    @media only screen and (max-width: $bp) {
+        @content;
+    }
+}

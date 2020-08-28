@@ -1,0 +1,25 @@
+{
+  "name": "simpleblogengine",
+  "version": "1.0.0",
+  "description": "A Simple Blog Engine made possible with RESTful API.",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "watch:sass": "node-sass static/scss/main.scss static/css/style.css -w"
+  },
+  "author": "Lukács Zsolt",
+  "license": "UNLICENSED",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rockdonald2/simpleblogengine.git"
+  },
+  "bugs": {
+    "url": "https://github.com/rockdonald2/simpleblogengine/issues"
+  },
+  "homepage": "https://github.com/rockdonald2/simpleblogengine#readme",
+  "devDependencies": {
+    "node-sass": "^4.14.1"
+  }
+}

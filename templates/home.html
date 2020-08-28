@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+
+{% block content %}
+<header class="header">
+    {% if session['auth'] %}
+    <p class="header--log">You are logged in as: {{ session['auth'][1] }}</p>
+    <a href="/write"
+        rel="noopener noreferrer"
+        class="link header--link">Write a post</a>
+    <a href="/logout"
+        rel="noopener noreferrer"
+        class="link header--link">Logout</a>
+    {% else %}
+    <a href="/login"
+        rel="noopener noreferrer"
+        class="link header--link">Login</a>
+    {% endif %}
+    <h1 class="header--heading">Hi, I'm Lukács Zsolt 😀</h1>
+</header>
+<section class="description">
+    <div>
+        <p class="description--text">I'm a student who tries something new every now and then. Maybe, I want to write
+            about
+            them, until then checkout my <a href="http://"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="link">GitHub <span>↗ &nbsp; </span></a> for some
+            interesting stuff that I made.</p>
+        <p class="description--text">
+            I mostly do my schoolwork, but sometimes I do something just for the sake of novelty.
+        </p>
+    </div>
+    <ul class="description--links">
+        Quick links
+        <li class="description--links__link">
+            <a href="https://github.com/rockdonald2"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="link">💻 GitHub <span>↗</span></a>
+        </li>
+        <li class="description--links__link">
+            <a href="https://rockdonald2.github.io/Resume/"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="link">📃 Resumé <span>↗</span></a>
+        </li>
+        <li class="description--links__link">
+            <a href="mailto:rockdonald2@gmail.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="link">👋🏻 Contact me via e-mail <span>↗</span></a>
+        </li>
+    </ul>
+</section>
+<section class="posts">
+    <div class="posts--heading">
+        <h2>What I'm writing about</h2>
+        <p>You might want to check out some of the things I wrote recently:</p>
+    </div>
+    <div class="posts--container">
+        {% if posts %}
+        {% for p in posts %}
+        <a href="post/{{ p['_id'] }}"
+            rel="noopener noreferrer"
+            class="posts--post">
+            <div class="posts--post__top">
+                <span>{{ p['title'] }}</span><span>Read more&nbsp;&nbsp;<span>&rarr;</span>
+            </div>
+            <div class="posts--post__bottom">
+                <span>{{ p['author'] }} | {{ p['date'] }}</span>
+            </div>
+        </a>
+        {% endfor %}
+        {% else %}
+        <p class="posts--empty">There are no posts yet...</p>
+        {% endif %}
+    </div>
+</section>
+{% endblock %}

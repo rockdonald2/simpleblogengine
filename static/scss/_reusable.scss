@@ -1,0 +1,46 @@
+/* 
+* Reusable components go here
+*/
+
+.link {
+    color: $link-color;
+    text-decoration: none;
+    font-weight: 500;
+    position: relative;
+    transition: $all-transition;
+
+    span {
+        display: inline-block;
+        transition: $all-transition;
+    }
+
+    &:hover {
+        color: $font-color;
+
+        &--underline {
+            &::before {
+                background-color: $font-color;
+            }
+        }
+
+        span {
+            transform: translateX(.25rem);
+        }
+    }
+}
+
+form input[type="submit"] {
+    padding: 1rem;
+    font-size: $medium-font;
+    background-color: rgba(#fffcf6, .1);
+    border: $link-color 1px solid;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: $all-transition;
+    margin-top: 1.5rem;
+
+    &:hover {
+        background-color: $link-color;
+        color: $bg-color;
+    }
+}

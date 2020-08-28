@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+
+{% block content %}
+<header class="header">
+    <a href="/home"
+        rel="noopener noreferrer"
+        class="link header--link">Home</a>
+    {% if session['auth'] %}
+    <a href="/edit/{{ id }}"
+        rel="noopener noreferrer"
+        class="link header--link">Edit this post</a>
+    {% endif %}
+    <h1 class="header--heading">{{ post.title }} </h1>
+</header>
+<article class="post markdown-body">
+    {{ post.text|markdown }}
+</article>
+{% endblock %}

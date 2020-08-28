@@ -1,0 +1,46 @@
+/* 
+* Everything related to the writing and editing page
+*/
+
+.write,
+.edit {
+    form {
+        display: flex;
+        flex-direction: column;
+
+        label {
+            font-size: $medium-font;
+            margin-bottom: 1rem;
+        }
+
+        textarea,
+        input[type="text"] {
+            border: $link-color 1px solid;
+            background: rgba(#fffcf6, .1);
+            border-radius: 5px;
+            overflow: auto;
+        }
+
+        input[type="text"] {
+            padding: .5rem 1rem; 
+            margin-bottom: 1rem;
+        } 
+
+        textarea {
+            height: 30rem;
+            width: 100%;
+            margin-left: auto;
+            margin-right: auto;
+            padding: 1rem;
+            resize: none;
+        }
+
+        input[type="submit"]:nth-of-type(3) {
+            background-color: rgba($error-color, .25);
+
+            &:hover {
+                background-color: rgba($error-color, .75);
+            }
+        }
+    }
+}

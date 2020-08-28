@@ -1,0 +1,29 @@
+/* 
+* Everything related to the header component
+*/
+
+.header {
+    margin-bottom: 2.5rem;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+
+    &--log {
+        font-size: $medium-font;
+        color: $link-color;
+        text-align: right;
+        cursor: default;
+    }
+
+    &--link {
+        display: inline-block;
+        text-align: right;
+        font-size: $medium-font;
+    }
+
+    &--heading {
+        font-size: $extra-large-font;
+        align-self: flex-start;
+        margin-top: 1rem;
+    }
+}

@@ -1,0 +1,76 @@
+/* 
+* Anything closely related to posts go here, including home cards, and post texts
+*/
+
+.posts {
+    &--heading {
+        h2 {
+            font-size: $large-font;
+            margin-bottom: 1rem;
+        }
+
+        p {
+            font-size: $medium-font;
+        }
+
+        margin-bottom: 1rem;
+    }
+
+    &--container {}
+
+    &--post {
+        border: $link-color 1px solid;
+        transition: $all-transition;
+        text-decoration: none;
+        display: block;
+        padding: 1rem 2rem;
+        width: 100%;
+        font-size: $small-font;
+        border-radius: 5px;
+
+        &__top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        
+
+            span {
+                &:nth-of-type(1) {
+                    font-weight: 700;
+                }
+
+                span {
+                    display: inline-block;
+                    transition: $all-transition;
+                }
+            }
+        }
+
+        &__bottom {
+            margin-top: .5rem;
+            color: $link-color;
+        }
+
+        &:hover,
+        &:focus {
+            border: $font-color 1px solid;
+
+            .posts--post__top {
+                span {
+                    span {
+                        transform: translateX(.25rem);
+                    }
+                }
+            }
+        }
+
+        &:not(:first-of-type) {
+            margin-top: 1rem;
+        }
+    }
+
+    &--empty {
+        font-size: $medium-font;
+        color: $link-color;
+    }
+}

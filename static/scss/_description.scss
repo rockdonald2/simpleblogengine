@@ -1,0 +1,51 @@
+/* 
+* Everything related to the description section
+*/
+
+.description {
+    margin-bottom: 2.5rem;
+    display: flex;
+    align-items: flex-start;
+
+    div {
+        width: 60%;
+    }
+
+    &--text {
+        font-size: $medium-font;
+        margin-right: 5rem;
+
+        &:not(:first-of-type) {
+            margin-top: 1.5rem;
+        }
+    }
+
+    &--links {
+        width: 40%;
+        font-size: $medium-font;
+        list-style-type: none;
+        font-weight: 500;
+        
+        &__link {
+            font-weight: 400;
+            font-size: $small-font;
+        }
+    }
+
+    @include responsive(700px) {
+        flex-direction: column;
+
+        div,
+        &--links {
+            width: 100%;
+        }
+
+        &--text {
+            margin-right: unset;
+        }
+
+        &--links {
+            margin-top: 1.5rem;
+        }
+    }
+}

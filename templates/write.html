@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+
+{% block content %}
+<header class="header">
+    <a href="/home"
+        rel="noopener noreferrer"
+        class="link header--link">Home</a>
+    <h1 class="header--heading">{{ title }} </h1>
+</header>
+<section class="write">
+    <form action='/write'
+        method="POST">
+        <label for="title">
+            What is the title of your post?
+        </label>
+        <input type="text" name="title" id="title" placeholder='Be short.'>
+        <label for="post">
+            You should write your post in Markdown or plain text.
+        </label>
+        <textarea name="post"
+            id="post"
+            wrap="on"
+            placeholder="Remember, be nice!"></textarea>
+        <input type="submit"
+            value="Publish your post">
+    </form>
+</section>
+{% endblock %}
