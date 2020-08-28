@@ -32,7 +32,6 @@ env.filters['markdown'] = lambda text: Markup(md.convert(text))
 env.trim_blocks = True
 env.lstrip_blocks = True
 
-# disable caching, to always see changes in CSS/JS files
 app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 20
 
 @app.route('/', methods=['GET'])
