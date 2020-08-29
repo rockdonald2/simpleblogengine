@@ -106,7 +106,9 @@ def logout():
     return redirect(url_for('home', message={'category': 'gr', 'msg': 'You\'ve successfully logged out!'}))
 
 
+# * cache each opened post for 10 minutes
 @app.route('/post/<id>', methods=['GET'])
+@cache.cached(timeout=600)
 def post(id):
     """ 
     This route displays one post, requested from the database with an ID associated to the post.
