@@ -30,15 +30,15 @@
 
         &__top {
             display: flex;
-            align-items: center;
+            align-items: flex-start;
             justify-content: space-between;
         
+            &--title {
+                font-weight: 700;
+                max-width: 65%;
+            }
 
             span {
-                &:nth-of-type(1) {
-                    font-weight: 700;
-                }
-
                 span {
                     display: inline-block;
                     transition: $all-transition;
