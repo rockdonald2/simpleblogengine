@@ -78,7 +78,7 @@ def login():
     login_template = env.get_template('login.html')
 
     if 'auth' in session:
-        return redirect(url_for('home'))
+        return redirect(url_for('home', message={'category': 'gr', 'msg': 'You\'re already logged in!'}))
     elif request.method == 'GET':
         return login_template.render(title='Log into your account')
     elif request.method == 'POST':

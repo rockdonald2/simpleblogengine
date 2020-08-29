@@ -109,7 +109,7 @@ body {
   transition: all 0.25s ease; }
   .link span {
     display: inline-block;
-    transition: all 0.25s ease; }
+    transition: inherit; }
   .link:hover {
     color: rgba(51, 51, 51, 0.85); }
     .link:hover--underline::before {

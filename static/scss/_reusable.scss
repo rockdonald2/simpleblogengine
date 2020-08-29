@@ -11,7 +11,7 @@
 
     span {
         display: inline-block;
-        transition: $all-transition;
+        transition: inherit;
     }
 
     &:hover {
