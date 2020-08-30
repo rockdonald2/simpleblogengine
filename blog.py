@@ -4,9 +4,14 @@ from jinja2 import Environment, FileSystemLoader, select_autoescape, Markup
 import requests
 import markdown
 import pymdownx
-from bcrypt import hashpw
+from bcrypt import hashpw, gensalt
 from os import urandom
 from datetime import datetime, timedelta
+import re
+
+""" 
+TODO: 4. Search
+"""
 
 # * Starting flask application
 app = Flask(__name__)
@@ -17,6 +22,7 @@ app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 20
 app.config['CACHE_TYPE'] = 'simple'
 app.config['CACHE_DEFAULT_TIMEOUT'] = 300
 cache = Cache(app)
+# * Cache is only cleared when there's a new comment/deleted comment/deleted post
 
 # * The API can be reached with this endpoint
 API_URL = 'http://127.0.0.1:5000/api/'
@@ -27,7 +33,7 @@ env = Environment(
     autoescape=select_autoescape(['html', 'xml'])
 )
 
-# * Extensions for the markdow JINJA2 filter
+# * Extensions for the markdown JINJA2 filter
 extension_configs = {
     "pymdownx.highlight": {
         "guess_lang": True,
@@ -89,10 +95,52 @@ def login():
         if existing_user:
             if hashpw(pwd.encode('utf-8'), existing_user[0]['pwd'].encode('utf-8')) == existing_user[0]['pwd'].encode('utf-8'):
                 session.permanent = True
-                session['auth'] = (email, existing_user[0]['name'])
+                session['auth'] = (email, existing_user[0]['name'], existing_user[0]['writer'], existing_user[0]['_id'][14:])
                 return redirect(url_for('home', message={'category': 'gr', 'msg': 'You\'ve successfully logged in!'}))
 
         return login_template.render(title='Log into your account', message={'category': 'err', 'msg': 'Invalid login credentials'})
+
+
+def validate(p):
+    """ 
+    Validates the argument password to a regexp object, returns a Match object, or None
+    """
+
+    pwd_regexp = re.compile(r'^.*(?=.{8,})(?=.*[a-zA-Z])(?=.*?[A-Z])(?=.*\d)[a-zA-Z0-9!@£$%^&*()_+={}?:~\[\]]+$')
+    return re.fullmatch(pwd_regexp, p)
+
+
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    """
+    Registers a new user, makes a post request to the users collection.
+    """
+
+    register_template = env.get_template('register.html')
+
+    if 'auth' in session:
+        return redirect(url_for('home', message={'category': 'gr', 'msg': 'Sign out first before registering a new account'}))
+    elif request.method == 'GET':
+        return register_template.render(title='Register your new account')
+    elif request.method == 'POST':
+        form = request.form
+
+        if not validate(form['pwd']):
+            return register_template.render(title='Register your account', message={'category': 'err', 'msg': 'Your password didn\'t match the requested format'})
+        
+        user = {
+            'email': form['email'],
+            'name': Markup.escape(form['name']),
+            'pwd': hashpw(form['pwd'].encode('utf-8'), gensalt()),
+            'writer': False
+        }
+
+        resp = requests.post(API_URL + 'users/', user)
+
+        if resp.status_code != 201:
+            return redirect(url_for('home', message={'category': 'err', 'msg': 'Something went wrong'}))
+
+        return redirect(url_for('home', message={'category': 'gr', 'msg': 'You\'ve have successfully created your account'}))
 
 
 @app.route('/logout', methods=['GET'])
@@ -106,9 +154,13 @@ def logout():
     return redirect(url_for('home', message={'category': 'gr', 'msg': 'You\'ve successfully logged out!'}))
 
 
-# * cache each opened post for 10 minutes
+# * cache each opened post for 2 minutes
+# * cache only works for unlogged users, for logged in users the caching mechanism is bypassed
+def check_login():
+    return 'auth' in session
+
 @app.route('/post/<id>', methods=['GET'])
-@cache.cached(timeout=600)
+@cache.cached(timeout=120, unless=check_login)
 def post(id):
     """ 
     This route displays one post, requested from the database with an ID associated to the post.
@@ -117,8 +169,67 @@ def post(id):
 
     post_template = env.get_template('post.html')
     p = requests.get(API_URL + 'posts/' + id).json()
-    return post_template.render(title=p['title'], post=p, session=session, id=id)
+    comments = requests.get(API_URL + 'comments?where={"post_id":"' + id + '"}').json()['_items']
+    return post_template.render(title=p['title'], post=p, session=session, id=id, comments=comments)
 
+
+@app.route('/comment&<id>', methods=['GET', 'POST'])
+def comment(id):
+    """
+    Allows the user to post comments, automatically makes a post request to the database.
+    After the post refreshes the post uncached with new comments.
+    """
+
+    if 'auth' in session:
+        if request.method == 'POST':
+            form = request.form
+
+            comment = {
+                'author': session['auth'][1],
+                'text': Markup.escape(form['cm']),
+                'date': datetime.today().strftime('%Y.%m.%d - %H:%M'),
+                'post_id': id
+            }
+
+            resp = requests.post(API_URL + 'comments/', comment)
+
+            if resp.status_code != 201:
+                return redirect(url_for('home', message={'category': 'err', 'msg': 'Something went wrong'}))
+
+        post_template = env.get_template('post.html')
+        p = requests.get(API_URL + 'posts/' + id).json()
+        comments = requests.get(API_URL + 'comments?where={"post_id":"' + id + '"}').json()['_items']
+        cache.clear()
+        return post_template.render(title=p['title'], post=p, session=session, id=id, comments=comments)
+    else:
+        return redirect(url_for('home', message={'category': 'err', 'msg': 'You\'re not logged in to comment on this post'}))
+
+
+@app.route('/comment/delete&<id>', methods=['POST'])
+def comment_delete(id):
+    """
+    Deletes a comment. Only two users can delete the comment, the author of the comment and the writer of the post.
+    """
+
+    if 'auth' in session:
+        cm = requests.get(API_URL + 'comments/' + id).json()
+        
+        if session['auth'][1] == cm['author'] or session['auth'][1] == requests.get(API_URL + 'posts/' + cm['post_id']).json()['author']:
+            headers = {
+                "If-Match": cm['_etag']
+            }
+
+            resp = requests.delete(API_URL + 'comments/' + id, headers=headers)
+
+            if resp.status_code != 204:
+                return redirect(url_for('home', message={'category': 'err', 'msg': 'Something went wrong'}))
+
+            cache.clear()
+            return '201'
+        else:
+            return redirect(url_for('home', message={'category': 'err', 'msg': 'You\'re not allowed to do that'}))
+    else:
+        return redirect(url_for('home', message={'category': 'err', 'msg': 'You\'re not allowed to do that'}))
 
 @app.route('/write', methods=['POST', 'GET'])
 def write():
@@ -145,7 +256,8 @@ def write():
 
                 return redirect(url_for('home', message={'category': 'gr', 'msg': 'Successfully published the post'}))
             else:
-                return redirect(url_for('home', message={'category': '', 'msg': 'Your post was empty, it isn\'t published'}))     
+                return redirect(url_for('home', message={'category': '', 'msg': 'Your post was empty, it isn\'t published'})) 
+
         write_template = env.get_template('write.html')
         return write_template.render(title='Write a quick post')
     else:
@@ -214,10 +326,13 @@ def delete(id):
         if resp.status_code != 204:
             return redirect(url_for('home', message={'category': 'err', 'msg': 'Something went wrong'}))
 
+        cache.clear()
         return redirect(url_for('home', message={'category': 'gr', 'msg': 'Your post was successfully deleted'}))
     else:
         return redirect(url_for('home', message={'category': 'err', 'msg': 'You\'re not logged in'}))
 
+
 # * the program starts here
 if __name__ == '__main__':
+    # ! take out the debug argument
     app.run(port=8000, debug=True)

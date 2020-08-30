@@ -1,0 +1,179 @@
+/* 
+* Anything closely related to posts go here, including home cards, and post texts
+*/
+
+.posts {
+    &--heading {
+        h2 {
+            font-size: $large-font;
+            margin-bottom: 1rem;
+        }
+
+        p {
+            font-size: $medium-font;
+        }
+
+        margin-bottom: 1rem;
+    }
+
+    &--container {}
+
+    &--post {
+        border: $link-color 1px solid;
+        transition: $all-transition;
+        text-decoration: none;
+        display: block;
+        padding: 1rem 2rem;
+        width: 100%;
+        font-size: $small-font;
+        border-radius: 5px;
+
+        &__top {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+
+            &--title {
+                font-weight: 700;
+                max-width: 65%;
+            }
+
+            span {
+                span {
+                    display: inline-block;
+                    transition: $all-transition;
+                }
+            }
+        }
+
+        &__bottom {
+            margin-top: .5rem;
+            color: $link-color;
+        }
+
+        &:hover,
+        &:focus {
+            border: $font-color 1px solid;
+
+            .posts--post__top {
+                span {
+                    span {
+                        transform: translateX(.25rem);
+                    }
+                }
+            }
+        }
+
+        &:not(:first-of-type) {
+            margin-top: 1rem;
+        }
+    }
+
+    &--empty {
+        font-size: $medium-font;
+        color: $link-color;
+    }
+}
+
+.post {}
+
+.comments {
+    margin-top: 2.5rem;
+    padding-top: 2.5rem;
+    border-top: $link-color 1px solid;
+
+    &--add {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        justify-content: flex-start;
+        margin-bottom: 2.5rem;
+
+        label {
+            font-size: $medium-font;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+
+            @include responsive(525px) {
+                width: 100%;
+                text-align: center;
+            }
+        }
+
+        textarea {
+            width: 100%;
+            height: 10rem;
+            padding: 1rem;
+            border: $link-color 1px solid;
+            border-radius: 5px;
+            background-color: $input-background;
+            resize: none;
+        }
+
+        input[type="submit"] {
+            @include responsive(525px) {
+                width: 100%;
+                text-align: center;
+            }
+        }
+    }
+
+    &--comment {
+        padding: 1rem;
+        border: $link-color 1px solid;
+        border-radius: 5px;
+
+        &:not(:first-of-type) {
+            margin-top: 1.5rem;
+        }
+
+        &__top,
+        &__bottom {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        &__top {
+            align-items: flex-start;
+        }
+
+        &__bottom {
+            align-items: flex-end;
+        }
+
+        &__author {
+            font-weight: 700;
+            margin-bottom: 1rem;
+            font-size: $medium-font;
+            max-width: 65%;
+        }
+
+        &__date {
+            font-size: $small-font;
+            text-align: right;
+        }
+
+        &__text {
+            font-size: $small-font;
+            max-width: 65%;
+        }
+
+        &__delete {
+            padding: .5rem 1rem;
+            cursor: pointer;
+            background-color: rgba($error-color, .15);
+            border: $link-color 1px solid;
+            transition: $all-transition;
+            border-radius: 5px;
+
+            &:hover,
+            &:focus {
+                background-color: rgba($error-color, .45);
+            }
+        }
+    }
+
+    &--empty {
+        font-size: $small-font;
+    }
+}

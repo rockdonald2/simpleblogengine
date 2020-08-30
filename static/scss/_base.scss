@@ -31,3 +31,13 @@ body {
     line-height: 2;
     color: $font-color;
 }
+
+::-moz-selection {
+    background-color: $select-color;
+    color: $bg-color;
+}
+
+::selection {
+    background-color: $select-color;
+    color: $bg-color;
+}

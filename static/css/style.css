@@ -32,6 +32,14 @@ body {
   line-height: 2;
   color: rgba(51, 51, 51, 0.85); }
 
+::-moz-selection {
+  background-color: #3498db;
+  color: #fafafa; }
+
+::selection {
+  background-color: #3498db;
+  color: #fafafa; }
+
 /* 
 * Everything related to the main container
 */
@@ -174,6 +182,72 @@ form input[type="submit"] {
   font-size: 1.7rem;
   color: rgba(51, 51, 51, 0.45); }
 
+.comments {
+  margin-top: 2.5rem;
+  padding-top: 2.5rem;
+  border-top: rgba(51, 51, 51, 0.45) 1px solid; }
+  .comments--add {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    justify-content: flex-start;
+    margin-bottom: 2.5rem; }
+    .comments--add label {
+      font-size: 1.7rem;
+      font-weight: 700;
+      margin-bottom: 1.5rem; }
+      @media only screen and (max-width: 525px) {
+        .comments--add label {
+          width: 100%;
+          text-align: center; } }
+    .comments--add textarea {
+      width: 100%;
+      height: 10rem;
+      padding: 1rem;
+      border: rgba(51, 51, 51, 0.45) 1px solid;
+      border-radius: 5px;
+      background-color: rgba(255, 252, 246, 0.1);
+      resize: none; }
+    @media only screen and (max-width: 525px) {
+      .comments--add input[type="submit"] {
+        width: 100%;
+        text-align: center; } }
+  .comments--comment {
+    padding: 1rem;
+    border: rgba(51, 51, 51, 0.45) 1px solid;
+    border-radius: 5px; }
+    .comments--comment:not(:first-of-type) {
+      margin-top: 1.5rem; }
+    .comments--comment__top, .comments--comment__bottom {
+      display: flex;
+      justify-content: space-between; }
+    .comments--comment__top {
+      align-items: flex-start; }
+    .comments--comment__bottom {
+      align-items: flex-end; }
+    .comments--comment__author {
+      font-weight: 700;
+      margin-bottom: 1rem;
+      font-size: 1.7rem;
+      max-width: 65%; }
+    .comments--comment__date {
+      font-size: 1.5rem;
+      text-align: right; }
+    .comments--comment__text {
+      font-size: 1.5rem;
+      max-width: 65%; }
+    .comments--comment__delete {
+      padding: .5rem 1rem;
+      cursor: pointer;
+      background-color: rgba(231, 76, 60, 0.15);
+      border: rgba(51, 51, 51, 0.45) 1px solid;
+      transition: all 0.25s ease;
+      border-radius: 5px; }
+      .comments--comment__delete:hover, .comments--comment__delete:focus {
+        background-color: rgba(231, 76, 60, 0.45); }
+  .comments--empty {
+    font-size: 1.5rem; }
+
 /* 
 * Everything related to the writing and editing page
 */
@@ -212,17 +286,56 @@ form input[type="submit"] {
     .edit form input[type="submit"]:nth-of-type(3):hover {
       background-color: rgba(231, 76, 60, 0.75); }
 
+.write--preview,
+.edit--preview {
+  margin-top: 2.5rem; }
+  .write--preview__header,
+  .edit--preview__header {
+    font-size: 1.7rem; }
+
+.tab {
+  margin-bottom: 2.5rem;
+  display: flex;
+  align-items: center; }
+  .tab--link {
+    flex: 1;
+    background-color: transparent;
+    border: none;
+    border-bottom: rgba(51, 51, 51, 0.45) 1px solid;
+    padding: 1rem 0;
+    font-size: 1.5rem;
+    cursor: pointer;
+    font-weight: 500;
+    border-radius: unset;
+    transition: all 0.25s ease; }
+    .tab--link:nth-of-type(odd) {
+      margin-right: .25rem; }
+    .tab--link:nth-of-type(even) {
+      margin-left: .25rem; }
+    .tab--link:hover, .tab--link:focus {
+      background-color: rgba(51, 51, 51, 0.1); }
+    .tab--link__focused {
+      background-color: rgba(51, 51, 51, 0.1); }
+  .tab--hide {
+    display: none; }
+
 /* 
 * Everything related to the login page
 */
-.login form {
+.login form,
+.register form {
   display: flex;
   flex-direction: column;
   align-items: center; }
-  .login form input:not(:first-of-type) {
+  .login form input:not(:first-of-type),
+  .register form input:not(:first-of-type) {
     margin-top: 1rem; }
   .login form input[type="email"],
-  .login form input[type="password"] {
+  .login form input[type="password"],
+  .login form input[type="text"],
+  .register form input[type="email"],
+  .register form input[type="password"],
+  .register form input[type="text"] {
     font-size: 1.7rem;
     padding: 1rem;
     background-color: rgba(255, 252, 246, 0.1);
@@ -230,8 +343,23 @@ form input[type="submit"] {
     border-radius: 5px; }
   .login form input[type="email"],
   .login form input[type="password"],
-  .login form input[type="submit"] {
+  .login form input[type="text"],
+  .login form input[type="submit"],
+  .register form input[type="email"],
+  .register form input[type="password"],
+  .register form input[type="text"],
+  .register form input[type="submit"] {
     width: 100%; }
+  .login form a,
+  .register form a {
+    margin-top: 1.5rem;
+    font-size: 1.5rem; }
+  .login form input[type="password"] + label[for="pwd"],
+  .register form input[type="password"] + label[for="pwd"] {
+    margin-top: .5rem;
+    width: 100%;
+    text-align: left;
+    color: rgba(51, 51, 51, 0.5); }
 
 .message--container {
   list-style-type: none;

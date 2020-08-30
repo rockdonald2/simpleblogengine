@@ -3,32 +3,57 @@
 {% block content %}
 <header class="header">
     <a href="/home"
-        rel="noopener noreferrer"
         class="link header--link">Home</a>
     <h1 class="header--heading">{{ title }} </h1>
 </header>
 <section class="edit">
-    <form
-        method="POST">
-        <label for="title">
-            What is the title of your post?
-        </label>
-        <input type="text"
-            name="title"
-            id="title"
-            placeholder='Be short.' value="{{ post.title }}" minlength=5 maxlength=90 required>
-        <label for="post">
-            You should write your post in Markdown or plain text.
-        </label>
-        <textarea name="post"
-            id="post"
-            wrap="on"
-            placeholder="Remember, be nice!" minlength=15 required>{{ post.text }}</textarea>
-        <input type="submit"
-            value="Publish your post" formaction="/edit/{{ id }}">
-        <input type="submit"
-            value="Delete this post" formaction="/delete/{{ id }}"></input>
-    </form>
+    <div class="tab">
+        <button class="tab--link tab--link__focused"
+            id="edit_your_post">Edit your post</button>
+        <button class="tab--link"
+            id="prev_your_post">Preview your post</button>
+    </div>
+    <div class="tab--content tab--edit">
+        <form method="POST">
+            <label for="title">
+                What is the title of your post?
+            </label>
+            <input type="text"
+                name="title"
+                id="title"
+                placeholder='Be short.'
+                value="{{ post.title }}"
+                minlength=5
+                maxlength=90
+                required>
+            <label for="post">
+                You should write your post in Markdown or plain text.
+            </label>
+            <textarea name="post"
+                id="post"
+                wrap="on"
+                placeholder="Remember, be nice!"
+                minlength=15
+                required>{{ post.text }}</textarea>
+            <input type="submit"
+                value="Publish your post"
+                formaction="/edit/{{ id }}">
+            <input type="submit"
+                value="Delete this post"
+                formaction="/delete/{{ id }}"></input>
+        </form>
+    </div>
+    <div class="tab--content tab--prev tab--hide">
+        <h2 class="edit--preview__header">Preview of your post, rendered</h2>
+        <div class="edit--preview markdown-body"></div>
+    </div>
 </section>
-<script src="../static/js/script.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"
+    defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/2.0.14/purify.min.js"
+    integrity="sha512-3hh5P4soaloZlzraI8Lejlwar1DRpK1VlvB7UHbtKWQafIeYKpxctSMMwjv7HG1KAMcpqIeJmZYr1Y0RHuk7VQ=="
+    crossorigin="anonymous"
+    defer></script>
+<script src="../static/js/script.js"
+    defer></script>
 {% endblock %}

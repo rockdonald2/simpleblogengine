@@ -3,11 +3,9 @@
 {% block content %}
 <header class="header">
     <a href="/home"
-        rel="noopener noreferrer"
         class="link header--link">Home</a>
-    {% if session['auth'] %}
+    {% if session['auth'] and post.author == session['auth'][1] and session['auth'][2] %}
     <a href="/edit/{{ id }}"
-        rel="noopener noreferrer"
         class="link header--link">Edit this post</a>
     {% endif %}
     <h1 class="header--heading">{{ post.title }} </h1>
@@ -15,4 +13,42 @@
 <article class="post markdown-body">
     {{ post.text|markdown }}
 </article>
+<section class="comments">
+    {% if session['auth'] %}
+    <form action="/comment&{{ id }}"
+        method="POST"
+        class="comments--add">
+        <label for="cm">Feel free to comment on this post</label>
+        <textarea name="cm"
+            id="cm"
+            placeholder="What are your thoughts?"
+            minlength=5
+            required></textarea>
+        <input type="submit"
+            value="Comment">
+    </form>
+    {% endif %}
+    {% if comments %}
+    {% for comment in comments %}
+    <div class="comments--comment">
+        <div class="comments--comment__top">
+            <p class="comments--comment__author">{{ comment.author }} commented:</p>
+            <p class="comments--comment__date">{{ comment.date }}</p>
+        </div>
+        <div class="comments--comment__bottom">
+            <p class="comments--comment__text">{{ comment.text }}</p>
+            {% if 'auth' in session and (session['auth'][1] == comment.author or session['auth'][1] == post.author) %}
+            <button class="comments--comment__delete" id="del_button" data-cm="{{ comment['_id'] }}">Delete</button>
+            {% endif %}
+        </div>
+    </div>
+    {% endfor %}
+    {% else %}
+    <p class="comments--empty">There are no comments yet</p>
+    {% endif %}
+</section>
+{% if 'auth' in session %}
+<script src="../static/js/script.js"
+    defer></script>
+{% endif %}
 {% endblock %}

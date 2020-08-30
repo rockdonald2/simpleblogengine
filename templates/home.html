@@ -4,15 +4,14 @@
 <header class="header">
     {% if session['auth'] %}
     <p class="header--log">You are logged in as: {{ session['auth'][1] }}</p>
+    {% if session['auth'][2] %}
     <a href="/write"
-        rel="noopener noreferrer"
         class="link header--link">Write a post</a>
+    {% endif %}
     <a href="/logout"
-        rel="noopener noreferrer"
         class="link header--link">Logout</a>
     {% else %}
     <a href="/login"
-        rel="noopener noreferrer"
         class="link header--link">Login</a>
     {% endif %}
     <h1 class="header--heading">Hi, I'm Lukács Zsolt 😀</h1>
@@ -21,7 +20,7 @@
     <div>
         <p class="description--text">I'm a student who tries something new every now and then. Maybe, I want to write
             about
-            them, until then checkout my <a href="http://"
+            them, until then checkout my <a href="https://github.com/rockdonald2"
                 target="_blank"
                 rel="noopener noreferrer"
                 class="link">GitHub <span>↗ &nbsp; </span></a> for some

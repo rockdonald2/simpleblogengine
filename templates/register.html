@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+
+{% block content %}
+<header class="header">
+    <a href="/home"
+        class="link header--link">Home</a>
+    <h1 class="header--heading">{{ title }}</h1>
+</header>
+<section class="register">
+    <form action="/register"
+        method="POST">
+        <input type="email" name="email" id="email" placeholder="Enter your e-mail address..." required>
+        <input type="text" name="name" id="name" minlength=5 placeholder="Enter your name..." required>
+        <input type="password" name="pwd" id="pwd" minlength=8 maxlength=96 pattern="^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d]{8,}$" placeholder="Enter your password..." required>
+        <label for="pwd">Your character should contain at least 8 characters, with at least one uppercase letter, one lowercase letter, and one number.</label>
+        <input type="submit" value="Register your account">
+    </form>
+</section>
+{% endblock %}

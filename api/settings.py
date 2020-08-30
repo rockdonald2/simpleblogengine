@@ -28,9 +28,18 @@ DOMAIN = {
     },
     'users': {
         'schema': {
-            'email': {'type': 'string'},
-            'name': {'type': 'string'},
-            'pwd': {'type': 'string'}
+            'email': {'type': 'string', 'required': True},
+            'name': {'type': 'string', 'required': True},
+            'pwd': {'type': 'string', 'required': True},
+            'writer': {'type': 'boolean', 'required': True}
+        }
+    },
+    'comments': {
+        'schema': {
+            'author': {'type': 'string', 'required': True},
+            'text': {'type': 'string', 'minlength': 5, 'required': True},
+            'date': {'type': 'string', 'required': True},
+            'post_id': {'type': 'objectid', 'required': True}
         }
     }
 }

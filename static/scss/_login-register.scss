@@ -2,7 +2,8 @@
 * Everything related to the login page
 */
 
-.login {
+.login,
+.register {
     form {
         display: flex;
         flex-direction: column;
@@ -13,18 +14,32 @@
         }
 
         input[type="email"],
-        input[type="password"] {
+        input[type="password"],
+        input[type="text"] {
             font-size: $medium-font;
             padding: 1rem;
-            background-color: rgba(#fffcf6, .1);
+            background-color: $input-background;
             border: $link-color 1px solid;
             border-radius: 5px;
         }
 
         input[type="email"],
         input[type="password"],
+        input[type="text"],
         input[type="submit"] {
             width: 100%;
+        }
+
+        a {
+            margin-top: 1.5rem;
+            font-size: $small-font;
+        }
+
+        input[type="password"]+label[for="pwd"] {
+            margin-top: .5rem;
+            width: 100%;
+            text-align: left;
+            color: rgba($link-color, .5);
         }
     }
 }
