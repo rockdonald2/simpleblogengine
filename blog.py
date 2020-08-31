@@ -7,10 +7,11 @@ import pymdownx
 from bcrypt import hashpw, gensalt
 from os import urandom
 from datetime import datetime, timedelta
-import re
+from re import fullmatch, compile
 
 """ 
 TODO: 4. Search
+TODO: 5. Like-system
 """
 
 # * Starting flask application
@@ -106,8 +107,8 @@ def validate(p):
     Validates the argument password to a regexp object, returns a Match object, or None
     """
 
-    pwd_regexp = re.compile(r'^.*(?=.{8,})(?=.*[a-zA-Z])(?=.*?[A-Z])(?=.*\d)[a-zA-Z0-9!@£$%^&*()_+={}?:~\[\]]+$')
-    return re.fullmatch(pwd_regexp, p)
+    pwd_regexp = compile(r'^.*(?=.{8,})(?=.*[a-zA-Z])(?=.*?[A-Z])(?=.*\d)[a-zA-Z0-9!@£$%^&*()_+={}?:~\[\]]+$')
+    return fullmatch(pwd_regexp, p)
 
 
 @app.route('/register', methods=['GET', 'POST'])
