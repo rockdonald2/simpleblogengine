@@ -1,14 +1,3 @@
-/* prevents the default effect on the enter key while a text input field is focused */
-
-window.addEventListener('keydown', function (e) {
-    if (e.keyIdentifier == 'U+000A' || e.keyIdentifier == 'Enter' || e.keyCode == 13) {
-        if (e.target.nodeName == 'INPUT' && e.target.type == 'text') {
-            e.preventDefault();
-            return false;
-        }
-    }
-}, true);
-
 /* client side javascript to make the preview tab functional */
 
 const md_textarea = document.querySelector('.write #post') || document.querySelector('.edit #post');
@@ -38,28 +27,5 @@ if (tab_button && tabs) {
         event.target.blur();
         tabs.forEach((t) => t.classList.add('tab--hide'));
         document.querySelector('.tab--' + event.target.id.slice(0, 4)).classList.remove('tab--hide');
-    }
-}
-
-/* deleting comments */
-
-const del_button = document.querySelectorAll('.comments #del_button') || null;
-
-if (del_button) {
-    del_button.forEach((d) => d.addEventListener('click', del));
-
-    function del (event) {
-        const httpRequest = new XMLHttpRequest;
-        const btn = this;
-        
-        httpRequest.onreadystatechange = function () {
-            if (this.readyState == 4 && this.response == 201) {
-                btn.parentNode.innerHTML = 'This comment was deleted';
-            }
-        }
-       
-        httpRequest.open('POST', '/comment/delete&' + this.dataset['cm']);
-        httpRequest.send();
-        this.blur();
     }
 }

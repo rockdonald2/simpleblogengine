@@ -38,8 +38,18 @@
         <div class="comments--comment__bottom">
             <p class="comments--comment__text">{{ comment.text }}</p>
             {% if 'auth' in session and (session['auth'][1] == comment.author or session['auth'][1] == post.author) %}
-            <button class="comments--comment__delete" id="del_button" data-cm="{{ comment['_id'] }}">Delete</button>
+            <button class="comments--comment__delete"
+                id="del_button"
+                data-cm="{{ comment['_id'] }}">Delete</button>
             {% endif %}
+        </div>
+        <div class="comments--comment__bar">
+            <button class="comments--comment__btn comments--comment__btn--up"
+                data-cm="{{ comment['_id'] }}"><img src="../static/imgs/arrow-up.svg"
+                    alt="Upvote icon">Upvote</button>
+            <button class="comments--comment__btn comments--comment__btn--down"
+                data-cm="{{ comment['_id'] }}"><img src="../static/imgs/arrow-down.svg"
+                    alt="Downvote icon">Downvote</button>
         </div>
     </div>
     {% endfor %}
@@ -48,7 +58,9 @@
     {% endif %}
 </section>
 {% if 'auth' in session %}
-<script src="../static/js/script.js"
+<script src="../static/js/delete_cm.js"
     defer></script>
 {% endif %}
+<script src="../static/js/vote.js"
+    defer></script>
 {% endblock %}

@@ -31,7 +31,7 @@ DOMAIN = {
             'email': {'type': 'string', 'required': True},
             'name': {'type': 'string', 'required': True},
             'pwd': {'type': 'string', 'required': True},
-            'writer': {'type': 'boolean', 'required': True}
+            'writer': {'type': 'boolean', 'required': True, 'default': False}
         }
     },
     'comments': {
@@ -39,7 +39,10 @@ DOMAIN = {
             'author': {'type': 'string', 'required': True},
             'text': {'type': 'string', 'minlength': 5, 'required': True},
             'date': {'type': 'string', 'required': True},
-            'post_id': {'type': 'objectid', 'required': True}
+            'post_id': {'type': 'objectid', 'required': True},
+            'vote': {'type': 'integer'},
+            'upvoted': {'type': 'list', 'minlength': 0, 'schema': {'type': 'string', 'minlength': 0}},
+            'downvoted': {'type': 'list', 'minlength': 0, 'schema': {'type': 'string', 'minlength': 0}}
         }
     }
 }

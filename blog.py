@@ -232,6 +232,134 @@ def comment_delete(id):
     else:
         return redirect(url_for('home', message={'category': 'err', 'msg': 'You\'re not allowed to do that'}))
 
+
+@app.route('/comment/upvote&<id>', methods=['POST'])
+def comment_upvote(id):
+    """ 
+    Allows the user to upvote comments, makes a patch request to the associated comment.
+    The comment's vote counter is incremented by 1.
+    """
+
+    if 'auth' in session:
+        cm = requests.get(API_URL + 'comments/' + id).json()
+
+        headers = {
+            "If-Match": cm['_etag']
+        }
+
+        print(headers)
+
+        currVote = cm['vote'] if 'vote' in cm else 0
+        upvoted = cm['upvoted'] if 'upvoted' in cm else list()
+        downvoted = cm['downvoted'] if 'downvoted' in cm else list()
+
+        returnCode = None
+
+        if session['auth'][0] in upvoted:
+            upvoted.pop(upvoted.index(session['auth'][0]))
+            # the post was upvoted, the upvote is cleared - code: 201
+            edit = {
+                'vote': currVote - 1,
+                'upvoted': upvoted,
+                'downvoted': downvoted
+            }
+
+            returnCode = 201
+        elif session['auth'][0] in downvoted:
+            downvoted.pop(downvoted.index(session['auth'][0]))
+            upvoted.append(session['auth'][0])
+            # the post was upvoted, the user changed it to downvote - code: 202
+            edit = {
+                'vote': currVote + 1,
+                'upvoted': upvoted,
+                'downvoted': downvoted
+            }
+
+            returnCode = 202
+        else:
+            upvoted.append(session['auth'][0])
+            # the post wasn't downvoted/upvoted by the user - code: 200
+            edit = {
+                'vote': currVote + 1,
+                'upvoted': upvoted,
+                'downvoted': downvoted
+            }
+
+            returnCode = 200
+
+        print(edit)
+        resp = requests.patch(API_URL + 'comments/' + id, edit, headers=headers)
+
+        if resp.status_code != 200:
+            return redirect(url_for('home', message={'category': 'err', 'msg': 'Something went wrong'}))
+
+        return returnCode
+    else:
+        return redirect(url_for('home', message={'category': 'err', 'msg': 'You\'re not allowed to vote a comment without logging in first'}))
+
+
+@app.route('/comment/downvote&<id>', methods=['POST'])
+def comment_downvote(id):
+    """ 
+    Allows the user to downvote comments, makes a patch request to the associated comment.
+    The comment's vote counter is decremented by one.
+    """
+
+    if 'auth' in session:
+        cm = requests.get(API_URL + 'comments/' + id).json()
+
+        headers = {
+            "If-Match": cm['_etag']
+        }
+
+        currVote = cm['vote'] if 'vote' in cm else 0
+        upvoted = cm['upvoted'] if 'upvoted' in cm else []
+        downvoted = cm['downvoted'] if 'downvoted' in cm else []
+
+        returnCode = None
+
+        if session['auth'][0] in upvoted:
+            upvoted.pop(upvoted.index(session['auth'][0]))
+            downvoted.append(session['auth'][0])
+            # the post was upvoted, the user changed it to downvote - code: 202
+            edit = {
+                'vote': currVote - 1,
+                'upvoted': upvoted,
+                'downvoted': downvoted
+            }
+
+            returnCode = 201
+        elif session['auth'][0] in downvoted:
+            downvoted.pop(downvoted.index(session['auth'][0]))
+            # the post was downvoted, the downvote is cleared - code: 201
+            edit = {
+                'vote': currVote + 1,
+                'upvoted': upvoted,
+                'downvoted': downvoted
+            }
+
+            returnCode = 202
+        else:
+            downvoted.append(session['auth'][0])
+            # the post wasn't downvoted/upvoted by the user - code: 200
+            edit = {
+                'vote': currVote - 1,
+                'upvoted': upvoted,
+                'downvoted': downvoted
+            }
+
+            returnCode = 200
+
+        resp = requests.patch(API_URL + 'comments/' + id, edit, headers=headers)
+
+        if resp.status_code != 200:
+            return redirect(url_for('home', message={'category': 'err', 'msg': 'Something went wrong'}))
+
+        return returnCode
+    else:
+        return redirect(url_for('home', message={'category': 'err', 'msg': 'You\'re not allowed to vote a comment without logging in first'}))
+
+
 @app.route('/write', methods=['POST', 'GET'])
 def write():
     """
