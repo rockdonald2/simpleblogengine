@@ -32,25 +32,127 @@
     {% for comment in comments %}
     <div class="comments--comment">
         <div class="comments--comment__top">
-            <p class="comments--comment__author">{{ comment.author }} commented:</p>
-            <p class="comments--comment__date">{{ comment.date }}</p>
+            <p class="comments--comment__author">{{ comment.data.author }} commented:</p>
+            <p class="comments--comment__date">{{ comment.data.date }}</p>
         </div>
         <div class="comments--comment__bottom">
-            <p class="comments--comment__text">{{ comment.text }}</p>
-            {% if 'auth' in session and (session['auth'][1] == comment.author or session['auth'][1] == post.author) %}
-            <button class="comments--comment__delete"
+            <p class="comments--comment__text">{{ comment.data.text }}</p>
+            {% if 'auth' in session and (session['auth'][1] == comment.data.author or session['auth'][1] == post.author) and not comment.data.deleted %}
+            <button class="comments--comment__btn comments--comment__btn--delete"
                 id="del_button"
                 data-cm="{{ comment['_id'] }}">Delete</button>
             {% endif %}
         </div>
         <div class="comments--comment__bar">
-            <button class="comments--comment__btn comments--comment__btn--up"
-                data-cm="{{ comment['_id'] }}"><img src="../static/imgs/arrow-up.svg"
-                    alt="Upvote icon">Upvote</button>
-            <button class="comments--comment__btn comments--comment__btn--down"
-                data-cm="{{ comment['_id'] }}"><img src="../static/imgs/arrow-down.svg"
-                    alt="Downvote icon">Downvote</button>
+            {% if 'auth' in session %}
+            <button class="comments--comment__btn comments--comment__btn--reply">Reply</button>
+            <button class="comments--comment__btn comments--comment__btn--up 
+            {{ 'comments--comment__btn--active' if session['auth'][0] in comment.data['voted']['upvote'] }}"
+                data-cm="{{ comment['_id'] }}">
+                <svg xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 20 20"
+                    fill="currentColor">
+                    <path fill-rule="evenodd"
+                        d="M3.293 9.707a1 1 0 010-1.414l6-6a1 1 0 011.414 0l6 6a1 1 0 01-1.414 1.414L11 5.414V17a1 1 0 11-2 0V5.414L4.707 9.707a1 1 0 01-1.414 0z"
+                        clip-rule="evenodd" />
+                </svg>
+                Upvote</button>
+            {% endif %}
+            <p class="comments--comment__votect">{{ '{0:{1}}'.format(comment.data['vote'], '+' if comment.data['vote'] else '') }}
+            </p>
+            {% if 'auth' in session %}
+            <button class="comments--comment__btn comments--comment__btn--down
+            {{ 'comments--comment__btn--active' if session['auth'][0] in comment.data['voted']['downvote'] }}"
+                data-cm="{{ comment['_id'] }}"><svg xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 20 20"
+                    fill="currentColor">
+                    <path fill-rule="evenodd"
+                        d="M16.707 10.293a1 1 0 010 1.414l-6 6a1 1 0 01-1.414 0l-6-6a1 1 0 111.414-1.414L9 14.586V3a1 1 0 012 0v11.586l4.293-4.293a1 1 0 011.414 0z"
+                        clip-rule="evenodd" />
+                </svg>Downvote</button>
+            {% endif %}
         </div>
+        {% if 'auth' in session %}
+        <div class="comments--comment__reply hide">
+            <form action="/comment/reply&{{ comment['_id'] }}&None"
+                method="POST">
+                <textarea name="rcm"
+                    id="rcm"
+                    Placeholder="What are your thoughts?"
+                    minlength=5
+                    required></textarea>
+                <button type="button"
+                    class="comments--comment__reply--cancel">Cancel</button>
+                <input type="submit"
+                    value="Reply">
+            </form>
+        </div>
+        {% endif %}
+        {% if comment.children %}
+        {% for subcomment in comment['children'] recursive %}
+        <div class="comments--reply">
+            <p class="comments--reply__author">{{ subcomment['data']['author'] }} replied:</p>
+            <p class="comments--reply__reply">{{ subcomment['data']['text'] }}</p>
+            <div class="comments--reply__bar">
+                {% if 'auth' in session %}
+                <button class="comments--reply__btn comments--reply__btn--reply">Reply</button>
+                {% if 'auth' in session and (session['auth'][1] == subcomment.data.author or session['auth'][1] == post.author) and not subcomment.data.deleted %}
+                <button class="comments--reply__btn comments--reply__btn--delete" data-cm="{{ subcomment['data']['reply_id'] }}"><svg xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor">
+                        <path stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg></button>
+                {% endif %}
+                <button class="comments--reply__btn comments--reply__btn--up
+                {{ 'comments--reply__btn--active' if session['auth'][0] in comment.data['voted']['upvote'] }}"
+                    data-cm="{{ comment['_id'] }}"><svg xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 20 20"
+                        fill="currentColor">
+                        <path fill-rule="evenodd"
+                            d="M3.293 9.707a1 1 0 010-1.414l6-6a1 1 0 011.414 0l6 6a1 1 0 01-1.414 1.414L11 5.414V17a1 1 0 11-2 0V5.414L4.707 9.707a1 1 0 01-1.414 0z"
+                            clip-rule="evenodd" />
+                    </svg></button>
+                {% endif %}
+                <p class="comments--reply__votect">{{ '{0:{1}}'.format(comment.data['vote'], '+' if comment.data['vote'] else
+                    '') }}</p>
+                {% if 'auth' in session %}
+                <button class="comments--reply__btn comments--reply__btn--down
+                {{ 'comments--reply__btn--active' if session['auth'][0] in comment.data['voted']['downvote'] }}"
+                    data-cm="{{ comment['_id'] }}"><svg xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 20 20"
+                        fill="currentColor">
+                        <path fill-rule="evenodd"
+                            d="M16.707 10.293a1 1 0 010 1.414l-6 6a1 1 0 01-1.414 0l-6-6a1 1 0 111.414-1.414L9 14.586V3a1 1 0 012 0v11.586l4.293-4.293a1 1 0 011.414 0z"
+                            clip-rule="evenodd" />
+                    </svg></button>
+                {% endif %}
+            </div>
+            {% if 'auth' in session %}
+            <div class="comments--reply__rereply hide">
+                <form action="/comment/reply&{{ comment['_id'] }}&{{ subcomment['data']['reply_id'] }}"
+                    method="POST">
+                    <textarea name="rcm"
+                        id="rcm"
+                        Placeholder="What are your thoughts?"
+                        minlength=5
+                        required></textarea>
+                    <button type="button"
+                        class="comments--reply__rereply--cancel">Cancel</button>
+                    <input type="submit"
+                        value="Reply">
+                </form>
+            </div>
+            {% endif %}
+            {% if subcomment.children %}
+            {{ loop(subcomment.children) }}
+            {% endif %}
+        </div>
+        {% endfor %}
+        {% endif %}
     </div>
     {% endfor %}
     {% else %}
@@ -60,7 +162,9 @@
 {% if 'auth' in session %}
 <script src="../static/js/delete_cm.js"
     defer></script>
-{% endif %}
 <script src="../static/js/vote.js"
     defer></script>
+<script src="../static/js/reply.js"
+    defer></script>
+{% endif %}
 {% endblock %}

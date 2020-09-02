@@ -27,7 +27,7 @@ html {
 
 body {
   box-sizing: border-box;
-  font-family: 'Noto Sans JP', sans-serif;
+  font-family: 'Noto Sans JP', sans-serif;
   background-color: #fafafa;
   line-height: 2;
   color: rgba(51, 51, 51, 0.85); }
@@ -61,16 +61,16 @@ body {
   flex-direction: column;
   align-items: flex-end; }
   .header--log {
-    font-size: 1.7rem;
+    font-size: 1.5rem;
     color: rgba(51, 51, 51, 0.45);
     text-align: right;
     cursor: default; }
   .header--link {
     display: inline-block;
     text-align: right;
-    font-size: 1.7rem; }
+    font-size: 1.5rem; }
   .header--heading {
-    font-size: 3.8rem;
+    font-size: 3.6rem;
     align-self: flex-start;
     margin-top: 1rem; }
 
@@ -84,18 +84,18 @@ body {
   .description div {
     width: 60%; }
   .description--text {
-    font-size: 1.7rem;
+    font-size: 1.5rem;
     margin-right: 5rem; }
     .description--text:not(:first-of-type) {
       margin-top: 1.5rem; }
   .description--links {
     width: 40%;
-    font-size: 1.7rem;
+    font-size: 1.5rem;
     list-style-type: none;
     font-weight: 500; }
     .description--links__link {
       font-weight: 400;
-      font-size: 1.5rem; }
+      font-size: 1.2rem; }
   @media only screen and (max-width: 700px) {
     .description {
       flex-direction: column; }
@@ -127,7 +127,7 @@ body {
 
 form input[type="submit"] {
   padding: 1rem;
-  font-size: 1.7rem;
+  font-size: 1.5rem;
   background-color: rgba(255, 252, 246, 0.1);
   border: rgba(51, 51, 51, 0.45) 1px solid;
   border-radius: 5px;
@@ -144,10 +144,10 @@ form input[type="submit"] {
 .posts--heading {
   margin-bottom: 1rem; }
   .posts--heading h2 {
-    font-size: 2rem;
+    font-size: 1.8rem;
     margin-bottom: 1rem; }
   .posts--heading p {
-    font-size: 1.7rem; }
+    font-size: 1.5rem; }
 
 .posts--post {
   border: rgba(51, 51, 51, 0.45) 1px solid;
@@ -156,7 +156,7 @@ form input[type="submit"] {
   display: block;
   padding: 1rem 2rem;
   width: 100%;
-  font-size: 1.5rem;
+  font-size: 1.2rem;
   border-radius: 5px; }
   .posts--post__top {
     display: flex;
@@ -179,7 +179,7 @@ form input[type="submit"] {
     margin-top: 1rem; }
 
 .posts--empty {
-  font-size: 1.7rem;
+  font-size: 1.5rem;
   color: rgba(51, 51, 51, 0.45); }
 
 .comments {
@@ -193,7 +193,7 @@ form input[type="submit"] {
     justify-content: flex-start;
     margin-bottom: 2.5rem; }
     .comments--add label {
-      font-size: 1.7rem;
+      font-size: 1.5rem;
       font-weight: 700;
       margin-bottom: 1.5rem; }
       @media only screen and (max-width: 525px) {
@@ -201,13 +201,8 @@ form input[type="submit"] {
           width: 100%;
           text-align: center; } }
     .comments--add textarea {
-      width: 100%;
-      height: 10rem;
-      padding: 1rem;
-      border: rgba(51, 51, 51, 0.45) 1px solid;
       border-radius: 5px;
-      background-color: rgba(255, 252, 246, 0.1);
-      resize: none; }
+      border: rgba(51, 51, 51, 0.45) 1px solid; }
     @media only screen and (max-width: 525px) {
       .comments--add input[type="submit"] {
         width: 100%;
@@ -224,27 +219,19 @@ form input[type="submit"] {
     .comments--comment__top {
       align-items: flex-start; }
     .comments--comment__bottom {
-      align-items: flex-end; }
+      align-items: flex-end;
+      flex-direction: column; }
     .comments--comment__author {
       font-weight: 700;
       margin-bottom: 1rem;
-      font-size: 1.7rem;
-      max-width: 65%; }
-    .comments--comment__date {
       font-size: 1.5rem;
+      max-width: 75%; }
+    .comments--comment__date {
+      font-size: 1.2rem;
       text-align: right; }
     .comments--comment__text {
-      font-size: 1.5rem;
-      max-width: 65%; }
-    .comments--comment__delete {
-      padding: .5rem 1rem;
-      cursor: pointer;
-      background-color: rgba(231, 76, 60, 0.15);
-      border: rgba(51, 51, 51, 0.45) 1px solid;
-      transition: all 0.25s ease;
-      border-radius: 5px; }
-      .comments--comment__delete:hover, .comments--comment__delete:focus {
-        background-color: rgba(231, 76, 60, 0.45); }
+      font-size: 1.2rem;
+      width: 100%; }
     .comments--comment__bar {
       margin-top: .75rem;
       padding: .5rem 1rem;
@@ -255,20 +242,154 @@ form input[type="submit"] {
       align-items: center;
       justify-content: flex-end; }
     .comments--comment__btn {
-      font-size: 1.5rem;
+      font-size: 1.2rem;
       cursor: pointer;
       display: flex;
       align-items: center;
       padding: .25rem .5rem;
       transition: all 0.25s ease; }
-      .comments--comment__btn img {
-        width: 20px;
-        height: 20px;
-        opacity: .65; }
-      .comments--comment__btn:not(:first-of-type) {
+      .comments--comment__btn svg {
+        width: 16px;
+        height: 16px;
+        opacity: .65;
+        margin-right: .25rem; }
+      .comments--comment__btn--up {
+        margin-right: .25rem; }
+        .comments--comment__btn--up.comments--comment__btn--active {
+          color: #27ae60; }
+      .comments--comment__btn--down {
         margin-left: .25rem; }
+        .comments--comment__btn--down.comments--comment__btn--active {
+          color: #e74c3c; }
+      .comments--comment__btn--reply {
+        margin-right: auto; }
+      .comments--comment__btn--delete {
+        padding: .5rem 1rem;
+        cursor: pointer;
+        background-color: rgba(231, 76, 60, 0.15);
+        border: rgba(51, 51, 51, 0.45) 1px solid;
+        transition: all 0.25s ease;
+        border-radius: 5px; }
+        .comments--comment__btn--delete:hover, .comments--comment__btn--delete:focus {
+          background-color: rgba(231, 76, 60, 0.45); }
+    .comments--comment__votect {
+      font-size: 1.2rem;
+      color: rgba(51, 51, 51, 0.45);
+      margin: 0 1rem;
+      min-width: 2.5rem;
+      text-align: center; }
+    .comments--comment__reply.hide {
+      display: none; }
+    .comments--comment__reply form {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      align-items: center; }
+      .comments--comment__reply form textarea {
+        border-radius: 0;
+        border-bottom: rgba(51, 51, 51, 0.45) 1px solid;
+        border-top: none;
+        border-left: none;
+        border-right: none; }
+      .comments--comment__reply form input[type="submit"] {
+        margin: .5rem 1rem; }
+    .comments--comment__reply--cancel {
+      font-size: 1.2rem;
+      background: none;
+      border: none;
+      color: rgba(51, 51, 51, 0.45);
+      border-bottom: 1px solid rgba(51, 51, 51, 0.45);
+      padding: 0 1rem .5rem 1rem;
+      margin-right: 10%;
+      cursor: pointer;
+      transition: all 0.25s ease; }
+      .comments--comment__reply--cancel:hover {
+        color: rgba(51, 51, 51, 0.85);
+        border-bottom-color: rgba(51, 51, 51, 0.85); }
   .comments--empty {
-    font-size: 1.5rem; }
+    font-size: 1.2rem; }
+  .comments textarea {
+    width: 100%;
+    height: 10rem;
+    padding: 1rem;
+    background-color: rgba(255, 252, 246, 0.1);
+    resize: none; }
+  .comments--comment > .comments--reply {
+    padding-right: 1.5rem;
+    padding-bottom: 1.5rem;
+    border-top: rgba(51, 51, 51, 0.45) 1px solid; }
+  .comments--reply {
+    padding: 1.5rem 0 0 1.5rem; }
+    .comments--reply > div.comments--reply {
+      padding-left: 2.5rem; }
+    .comments--reply__author {
+      font-weight: 700;
+      margin-bottom: .5rem; }
+    .comments--reply__reply {
+      font-size: 1.2rem; }
+    .comments--reply__bar {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      margin-top: .5rem; }
+    .comments--reply__btn {
+      display: flex;
+      align-items: center;
+      padding: .25rem .5rem;
+      font-size: 1.2rem;
+      cursor: pointer; }
+      .comments--reply__btn svg {
+        width: 12px;
+        height: 12px;
+        opacity: .65; }
+      .comments--reply__btn--reply {
+        margin-right: auto;
+        background: none;
+        border: none;
+        color: rgba(51, 51, 51, 0.45);
+        border-radius: unset;
+        border-bottom: rgba(51, 51, 51, 0.45) 1px solid;
+        transition: all 0.25s ease; }
+        .comments--reply__btn--reply:hover {
+          color: rgba(51, 51, 51, 0.85);
+          border-bottom-color: rgba(51, 51, 51, 0.85); }
+      .comments--reply__btn--delete {
+        margin-right: 3.5rem; }
+      .comments--reply__btn--up {
+        margin-right: .25rem; }
+      .comments--reply__btn--down {
+        margin-left: .25rem; }
+    .comments--reply__votect {
+      margin: 0 1rem;
+      color: rgba(51, 51, 51, 0.45);
+      min-width: 1.5rem;
+      text-align: center; }
+    .comments--reply__rereply {
+      margin-top: 1rem; }
+      .comments--reply__rereply.hide {
+        display: none; }
+      .comments--reply__rereply form {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: flex-end; }
+        .comments--reply__rereply form input[type="submit"] {
+          margin-top: 0; }
+        .comments--reply__rereply form textarea {
+          margin-bottom: 1rem; }
+      .comments--reply__rereply--cancel {
+        margin-right: auto;
+        font-size: 1.2rem;
+        background: none;
+        border: none;
+        color: rgba(51, 51, 51, 0.45);
+        border-bottom: 1px solid rgba(51, 51, 51, 0.45);
+        padding: 0 1rem .5rem 1rem;
+        cursor: pointer;
+        transition: all 0.25s ease; }
+        .comments--reply__rereply--cancel:hover {
+          color: rgba(51, 51, 51, 0.85);
+          border-bottom-color: rgba(51, 51, 51, 0.85); }
 
 /* 
 * Everything related to the writing and editing page
@@ -279,7 +400,7 @@ form input[type="submit"] {
   flex-direction: column; }
   .write form label,
   .edit form label {
-    font-size: 1.7rem;
+    font-size: 1.5rem;
     margin-bottom: 1rem; }
   .write form textarea,
   .write form input[type="text"],
@@ -313,7 +434,7 @@ form input[type="submit"] {
   margin-top: 2.5rem; }
   .write--preview__header,
   .edit--preview__header {
-    font-size: 1.7rem; }
+    font-size: 1.5rem; }
 
 .tab {
   margin-bottom: 2.5rem;
@@ -325,7 +446,7 @@ form input[type="submit"] {
     border: none;
     border-bottom: rgba(51, 51, 51, 0.45) 1px solid;
     padding: 1rem 0;
-    font-size: 1.5rem;
+    font-size: 1.2rem;
     cursor: pointer;
     font-weight: 500;
     border-radius: unset;
@@ -358,7 +479,7 @@ form input[type="submit"] {
   .register form input[type="email"],
   .register form input[type="password"],
   .register form input[type="text"] {
-    font-size: 1.7rem;
+    font-size: 1.5rem;
     padding: 1rem;
     background-color: rgba(255, 252, 246, 0.1);
     border: rgba(51, 51, 51, 0.45) 1px solid;
@@ -375,7 +496,7 @@ form input[type="submit"] {
   .login form a,
   .register form a {
     margin-top: 1.5rem;
-    font-size: 1.5rem; }
+    font-size: 1.2rem; }
   .login form input[type="password"] + label[for="pwd"],
   .register form input[type="password"] + label[for="pwd"] {
     margin-top: .5rem;
@@ -394,7 +515,7 @@ form input[type="submit"] {
   opacity: .85; }
 
 .message--message {
-  font-size: 1.7rem; }
+  font-size: 1.5rem; }
   .message--message:not(:first-of-type) {
     margin-top: 1rem; }
 

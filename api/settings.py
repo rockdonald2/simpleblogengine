@@ -28,7 +28,7 @@ DOMAIN = {
     },
     'users': {
         'schema': {
-            'email': {'type': 'string', 'required': True},
+            'email': {'type': 'string', 'required': True, 'unique': True},
             'name': {'type': 'string', 'required': True},
             'pwd': {'type': 'string', 'required': True},
             'writer': {'type': 'boolean', 'required': True, 'default': False}
@@ -36,13 +36,16 @@ DOMAIN = {
     },
     'comments': {
         'schema': {
-            'author': {'type': 'string', 'required': True},
-            'text': {'type': 'string', 'minlength': 5, 'required': True},
-            'date': {'type': 'string', 'required': True},
+            'data': {'type': 'dict', 'required': True, 'schema': {
+                'author': {'type': 'string', 'required': True},
+                'text': {'type': 'string', 'minlength': 5, 'required': True},
+                'date': {'type': 'string', 'required': True},
+                'deleted': {'type': 'boolean', 'required': True, 'default': False},
+                'vote': {'type': 'integer', 'required': True, 'default': 0},
+                'voted': {'type': 'dict', 'required': True, 'default': {'upvote': [], 'downvote': []}}
+            }},
             'post_id': {'type': 'objectid', 'required': True},
-            'vote': {'type': 'integer'},
-            'upvoted': {'type': 'list', 'minlength': 0, 'schema': {'type': 'string', 'minlength': 0}},
-            'downvoted': {'type': 'list', 'minlength': 0, 'schema': {'type': 'string', 'minlength': 0}}
+            'children': {'type': 'list', 'default': [], 'required': True, 'nullable': True}
         }
     }
 }
@@ -54,3 +57,14 @@ DOMAIN = {
 # * Disabling PAGINATION results in getting all the information in one request
 HATEOAS = False
 PAGINATION = False
+
+""" 'comments': {
+        'schema': {
+            'author': {'type': 'string', 'required': True},
+            'text': {'type': 'string', 'minlength': 5, 'required': True},
+            'date': {'type': 'string', 'required': True},
+            'post_id': {'type': 'objectid', 'required': True},
+            'vote': {'type': 'integer', 'required': True, 'default': 0},
+            'voted': {'type': 'dict', 'required': True, 'default': {'upvote': [], 'downvote': []}}
+        }
+    }, """

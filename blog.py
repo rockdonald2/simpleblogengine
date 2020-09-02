@@ -8,10 +8,21 @@ from bcrypt import hashpw, gensalt
 from os import urandom
 from datetime import datetime, timedelta
 from re import fullmatch, compile
+from json import dumps
+from anytree import AnyNode, find
+from anytree.exporter import JsonExporter
+from anytree.importer import DictImporter
+import uuid
 
 """ 
 TODO: 4. Search
 TODO: 5. Like-system
+TODO: 6. Reply-system
+"""
+
+""" 
+! bug: if the whole comment tree is deleted, the comments still remain there,
+! bug: we cannot delete a parent comment's first and only child reply
 """
 
 # * Starting flask application
@@ -27,6 +38,11 @@ cache = Cache(app)
 
 # * The API can be reached with this endpoint
 API_URL = 'http://127.0.0.1:5000/api/'
+
+# * tree exporter to JSON
+exporter = JsonExporter()
+# * tree importer to Dict
+importer = DictImporter()
 
 # * Environment used in JINJA2 templates
 env = Environment(
@@ -129,6 +145,9 @@ def register():
         if not validate(form['pwd']):
             return register_template.render(title='Register your account', message={'category': 'err', 'msg': 'Your password didn\'t match the requested format'})
         
+        if not (form['pwd'] == form['cpwd']):
+            return register_template.render(title='Register your account', message={'category': 'err', 'msg': 'Passwords do not match'})
+        
         user = {
             'email': form['email'],
             'name': Markup.escape(form['name']),
@@ -171,6 +190,7 @@ def post(id):
     post_template = env.get_template('post.html')
     p = requests.get(API_URL + 'posts/' + id).json()
     comments = requests.get(API_URL + 'comments?where={"post_id":"' + id + '"}').json()['_items']
+
     return post_template.render(title=p['title'], post=p, session=session, id=id, comments=comments)
 
 
@@ -185,14 +205,19 @@ def comment(id):
         if request.method == 'POST':
             form = request.form
 
+            headers = {
+                'Content-Type': 'application/json'
+            }
+
             comment = {
                 'author': session['auth'][1],
                 'text': Markup.escape(form['cm']),
-                'date': datetime.today().strftime('%Y.%m.%d - %H:%M'),
-                'post_id': id
+                'date': datetime.today().strftime('%Y.%m.%d - %H:%M')
             }
 
-            resp = requests.post(API_URL + 'comments/', comment)
+            treeComment = exporter.export(AnyNode(data=comment, post_id=id))
+            
+            resp = requests.post(API_URL + 'comments/', treeComment, headers=headers)
 
             if resp.status_code != 201:
                 return redirect(url_for('home', message={'category': 'err', 'msg': 'Something went wrong'}))
@@ -210,23 +235,71 @@ def comment(id):
 def comment_delete(id):
     """
     Deletes a comment. Only two users can delete the comment, the author of the comment and the writer of the post.
+    The delete functionality is variable.
+    If the comment has no replies, it is deleted entirely, even from the database.
+    Although, if the comment has replies, it remains unchanged, only its text changes.
     """
 
+    cid = id[:24]
+    sid = id[24:] or None
+
     if 'auth' in session:
-        cm = requests.get(API_URL + 'comments/' + id).json()
-        
-        if session['auth'][1] == cm['author'] or session['auth'][1] == requests.get(API_URL + 'posts/' + cm['post_id']).json()['author']:
+        cm = requests.get(API_URL + 'comments/' + cid).json()
+
+        if session['auth'][1] == cm['data']['author'] or session['auth'][1] == requests.get(API_URL + 'posts/' + cm['post_id']).json()['author']:
             headers = {
-                "If-Match": cm['_etag']
+                "If-Match": cm['_etag'],
+                "Content-Type": "application/json"
             }
 
-            resp = requests.delete(API_URL + 'comments/' + id, headers=headers)
+            if sid == None:
+                if not cm['children']:
+                    resp = requests.delete(API_URL + 'comments/' + cid, headers=headers)
 
-            if resp.status_code != 204:
-                return redirect(url_for('home', message={'category': 'err', 'msg': 'Something went wrong'}))
+                    if resp.status_code != 204:
+                        return redirect(url_for('home', message={'category': 'err', 'msg': 'Something went wrong'}))
+                else:
+                    edit = {
+                        'data': {
+                            'text': 'This comment was deleted',
+                            'deleted': True
+                        }
+                    }
+
+                    resp = requests.patch(API_URL + 'comments/' + cid, dumps(edit), headers=headers)
+
+                    if resp.status_code != 200:
+                        return redirect(url_for('home', message={'category': 'err', 'msg': 'Something went wrong'}))
+            else:
+                relevant = {
+                    'data': cm['data'],
+                    'children': cm['children']
+                }
+
+                headers = {
+                    "If-Match": cm['_etag'],
+                    "Content-Type": "application/json"
+                }
+
+                parentComment = importer.import_(relevant)
+                searchedReply = find(parentComment, lambda reply: 'reply_id' in reply.data and reply.data['reply_id'] == id)
+
+                if searchedReply.children:
+                    searchedReply.data['text'] = 'This comment was deleted'
+                    searchedReply.data['deleted'] = True
+                else:
+                    searchedParent = searchedReply.parent
+                    searchedParent.children = tuple(filter(lambda reply: reply.data['reply_id'] != id, searchedParent.children))
+
+                exported = exporter.export(parentComment)
+
+                resp = requests.patch(API_URL + 'comments/' + cid, exported, headers=headers)
+
+                if resp.status_code != 200:
+                        return redirect(url_for('home', message={'category': 'err', 'msg': 'Something went wrong'}))
 
             cache.clear()
-            return '201'
+            return '200'
         else:
             return redirect(url_for('home', message={'category': 'err', 'msg': 'You\'re not allowed to do that'}))
     else:
@@ -244,51 +317,40 @@ def comment_upvote(id):
         cm = requests.get(API_URL + 'comments/' + id).json()
 
         headers = {
-            "If-Match": cm['_etag']
+            "If-Match": cm['_etag'],
+            "Content-Type": "application/json"
         }
 
-        print(headers)
-
-        currVote = cm['vote'] if 'vote' in cm else 0
-        upvoted = cm['upvoted'] if 'upvoted' in cm else list()
-        downvoted = cm['downvoted'] if 'downvoted' in cm else list()
-
+        currVote = cm['vote']
+        currVoted = cm['voted']
         returnCode = None
 
-        if session['auth'][0] in upvoted:
-            upvoted.pop(upvoted.index(session['auth'][0]))
+        if session['auth'][0] in currVoted['upvote']:
+            currVoted['upvote'].pop(currVoted['upvote'].index(session['auth'][0]))
+            currVote -= 1
             # the post was upvoted, the upvote is cleared - code: 201
-            edit = {
-                'vote': currVote - 1,
-                'upvoted': upvoted,
-                'downvoted': downvoted
-            }
 
-            returnCode = 201
-        elif session['auth'][0] in downvoted:
-            downvoted.pop(downvoted.index(session['auth'][0]))
-            upvoted.append(session['auth'][0])
-            # the post was upvoted, the user changed it to downvote - code: 202
-            edit = {
-                'vote': currVote + 1,
-                'upvoted': upvoted,
-                'downvoted': downvoted
-            }
+            returnCode = '201'
+        elif session['auth'][0] in currVoted['downvote']:
+            currVoted['downvote'].pop(currVoted['downvote'].index(session['auth'][0]))
+            currVoted['upvote'].append(session['auth'][0])
+            currVote += 2
+            # the post was downvoted, the user changed it to upvote - code: 202
 
-            returnCode = 202
+            returnCode = '202'
         else:
-            upvoted.append(session['auth'][0])
-            # the post wasn't downvoted/upvoted by the user - code: 200
-            edit = {
-                'vote': currVote + 1,
-                'upvoted': upvoted,
-                'downvoted': downvoted
-            }
+            currVoted['upvote'].append(session['auth'][0])
+            currVote += 1
+            # the post wasn't upvoted by the user - code: 200
 
-            returnCode = 200
+            returnCode = '200'
 
-        print(edit)
-        resp = requests.patch(API_URL + 'comments/' + id, edit, headers=headers)
+        edit = {
+            'vote': currVote,
+            'voted': currVoted
+        }
+
+        resp = requests.patch(API_URL + 'comments/' + id, dumps(edit), headers=headers)
 
         if resp.status_code != 200:
             return redirect(url_for('home', message={'category': 'err', 'msg': 'Something went wrong'}))
@@ -309,48 +371,40 @@ def comment_downvote(id):
         cm = requests.get(API_URL + 'comments/' + id).json()
 
         headers = {
-            "If-Match": cm['_etag']
+            "If-Match": cm['_etag'],
+            "Content-Type": "application/json"
         }
 
-        currVote = cm['vote'] if 'vote' in cm else 0
-        upvoted = cm['upvoted'] if 'upvoted' in cm else []
-        downvoted = cm['downvoted'] if 'downvoted' in cm else []
-
+        currVote = cm['vote']
+        currVoted = cm['voted']
         returnCode = None
 
-        if session['auth'][0] in upvoted:
-            upvoted.pop(upvoted.index(session['auth'][0]))
-            downvoted.append(session['auth'][0])
-            # the post was upvoted, the user changed it to downvote - code: 202
-            edit = {
-                'vote': currVote - 1,
-                'upvoted': upvoted,
-                'downvoted': downvoted
-            }
-
-            returnCode = 201
-        elif session['auth'][0] in downvoted:
-            downvoted.pop(downvoted.index(session['auth'][0]))
+        if session['auth'][0] in currVoted['downvote']:
+            currVoted['downvote'].pop(currVoted['downvote'].index(session['auth'][0]))
+            currVote += 1
             # the post was downvoted, the downvote is cleared - code: 201
-            edit = {
-                'vote': currVote + 1,
-                'upvoted': upvoted,
-                'downvoted': downvoted
-            }
 
-            returnCode = 202
+            returnCode = '201'
+        elif session['auth'][0] in currVoted['upvote']:
+            currVoted['upvote'].pop(currVoted['upvote'].index(session['auth'][0]))
+            currVoted['downvote'].append(session['auth'][0])
+            currVote -= 2
+            # the post was upvoted, the user changed it to downvote - code: 202
+
+            returnCode = '202'
         else:
-            downvoted.append(session['auth'][0])
-            # the post wasn't downvoted/upvoted by the user - code: 200
-            edit = {
-                'vote': currVote - 1,
-                'upvoted': upvoted,
-                'downvoted': downvoted
-            }
+            currVoted['downvote'].append(session['auth'][0])
+            currVote -= 1
+            # the post wasn't downvoted by the user - code: 200
 
-            returnCode = 200
+            returnCode = '200'
 
-        resp = requests.patch(API_URL + 'comments/' + id, edit, headers=headers)
+        edit = {
+            'vote': currVote,
+            'voted': currVoted
+        }
+
+        resp = requests.patch(API_URL + 'comments/' + id, dumps(edit), headers=headers)
 
         if resp.status_code != 200:
             return redirect(url_for('home', message={'category': 'err', 'msg': 'Something went wrong'}))
@@ -359,6 +413,61 @@ def comment_downvote(id):
     else:
         return redirect(url_for('home', message={'category': 'err', 'msg': 'You\'re not allowed to vote a comment without logging in first'}))
 
+
+@app.route('/comment/reply&<id>&<sid>', methods=['GET', 'POST'])
+def reply_comment(id, sid):
+    """
+    Allows the user to reply to a specific comment, which will appear on the website hierarchically.
+    To describe the problem hierarchically we need to use some sort of tree.
+    """
+
+    if 'auth' in session:
+        cm = requests.get(API_URL + 'comments/' + id).json()
+
+        if request.method == 'POST':
+            relevant = {
+                'data': cm['data'],
+                'children': cm['children']
+            }
+            form = request.form
+
+            parentComment = importer.import_(relevant)
+            
+            if parentComment.children and sid:
+                searchedReply = find(parentComment, lambda reply: 'reply_id' in reply.data and reply.data['reply_id'] == sid)
+            else:
+                searchedReply = False
+
+            reply = {
+                'author': session['auth'][1],
+                'text': Markup.escape(form['rcm']),
+                'date': datetime.today().strftime('%Y.%m.%d - %H:%M'),
+                'reply_id': id + str(uuid.uuid4()),
+                'deleted': False
+            }
+
+            if searchedReply:
+                replyNode = AnyNode(data=reply, parent=searchedReply)
+            else:
+                replyNode = AnyNode(data=reply, parent=parentComment)
+
+            headers = {
+                "If-Match": cm['_etag'],
+                "Content-Type": "application/json"
+            }
+
+            resp = requests.patch(API_URL + 'comments/' + id, exporter.export(parentComment), headers=headers)
+
+            if resp.status_code != 200:
+                return redirect(url_for('home', message={'category': 'err', 'msg': 'Something went wrong'}))
+
+        post_template = env.get_template('post.html')
+        p = requests.get(API_URL + 'posts/' + cm['post_id']).json()
+        comments = requests.get(API_URL + 'comments?where={"post_id":"' + cm['post_id'] + '"}').json()['_items']
+        cache.clear()
+        return post_template.render(title=p['title'], post=p, session=session, id=cm['post_id'], comments=comments)
+    else:
+        return redirect(url_for('home', message={'category': 'err', 'msg': 'Sign in first to reply to a comment'}))
 
 @app.route('/write', methods=['POST', 'GET'])
 def write():
@@ -423,7 +532,7 @@ def edit(id):
                 resp = requests.patch(post_url, post, headers=headers)
 
                 if resp.status_code != 200:
-                    return redirect(url_for('home', messagae={'category': 'err', 'msg': 'Something went wrong'}))
+                    return redirect(url_for('home', message={'category': 'err', 'msg': 'Something went wrong'}))
 
                 return redirect(url_for('home', message={'category': 'gr', 'msg': 'You\'ve successfully edited your posted'}))
             else:

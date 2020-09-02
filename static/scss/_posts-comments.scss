@@ -16,8 +16,6 @@
         margin-bottom: 1rem;
     }
 
-    &--container {}
-
     &--post {
         border: $link-color 1px solid;
         transition: $all-transition;
@@ -101,13 +99,8 @@
         }
 
         textarea {
-            width: 100%;
-            height: 10rem;
-            padding: 1rem;
-            border: $link-color 1px solid;
             border-radius: 5px;
-            background-color: $input-background;
-            resize: none;
+            border: $link-color 1px solid;
         }
 
         input[type="submit"] {
@@ -139,13 +132,14 @@
 
         &__bottom {
             align-items: flex-end;
+            flex-direction: column;
         }
 
         &__author {
             font-weight: 700;
             margin-bottom: 1rem;
             font-size: $medium-font;
-            max-width: 65%;
+            max-width: 75%;
         }
 
         &__date {
@@ -155,21 +149,7 @@
 
         &__text {
             font-size: $small-font;
-            max-width: 65%;
-        }
-
-        &__delete {
-            padding: .5rem 1rem;
-            cursor: pointer;
-            background-color: rgba($error-color, .15);
-            border: $link-color 1px solid;
-            transition: $all-transition;
-            border-radius: 5px;
-
-            &:hover,
-            &:focus {
-                background-color: rgba($error-color, .45);
-            }
+            width: 100%;
         }
 
         &__bar {
@@ -191,19 +171,226 @@
             padding: .25rem .5rem;
             transition: $all-transition;
 
-            img {
-                width: 20px;
-                height: 20px;
+            svg {
+                width: 16px;
+                height: 16px;
                 opacity: .65;
+                margin-right: .25rem;
             }
 
-            &:not(:first-of-type) {
+            &--up {
+                margin-right: .25rem;
+
+                &.comments--comment__btn--active {
+                    color: $good-color;
+                }
+            }
+
+            &--down {
                 margin-left: .25rem;
+
+                &.comments--comment__btn--active {
+                    color: $error-color;
+                }
+            }
+
+            &--reply {
+                margin-right: auto;
+            }
+
+            &--delete {
+                padding: .5rem 1rem;
+                cursor: pointer;
+                background-color: rgba($error-color, .15);
+                border: $link-color 1px solid;
+                transition: $all-transition;
+                border-radius: 5px;
+
+                &:hover,
+                &:focus {
+                    background-color: rgba($error-color, .45);
+                }
+            }
+        }
+
+        &__votect {
+            font-size: $small-font;
+            color: $link-color;
+            margin: 0 1rem;
+            min-width: 2.5rem;
+            text-align: center;
+        }
+
+        &__reply {
+            &.hide {
+                display: none;
+            }
+
+            form {
+                display: flex;
+                flex-wrap: wrap;
+                justify-content: flex-end;
+                align-items: center;
+
+                textarea {
+                    border-radius: 0;
+                    border-bottom: $link-color 1px solid;
+                    border-top: none;
+                    border-left: none;
+                    border-right: none;
+                }
+
+                input[type="submit"] {
+                    margin: .5rem 1rem;
+                }
+            }
+
+            &--cancel {
+                font-size: $small-font;
+                background: none;
+                border: none;
+                color: $link-color;
+                border-bottom: 1px solid $link-color;
+                padding: 0 1rem .5rem 1rem;
+                margin-right: 10%;
+                cursor: pointer;
+                transition: $all-transition;
+
+                &:hover {
+                    color: $font-color;
+                    border-bottom-color: $font-color;
+                }
             }
         }
     }
 
     &--empty {
         font-size: $small-font;
+    }
+
+    textarea {
+        width: 100%;
+        height: 10rem;
+        padding: 1rem;
+        background-color: $input-background;
+        resize: none;
+    }
+
+    &--comment > .comments--reply {
+        padding-right: 1.5rem;
+        padding-bottom: 1.5rem;
+        border-top: $link-color 1px solid;
+    }
+
+    &--reply {
+        padding: 1.5rem 0 0 1.5rem;
+
+        & > div.comments--reply {
+            padding-left: 2.5rem;
+        }
+
+        &__author {
+            font-weight: 700;
+            margin-bottom: .5rem;
+        }
+
+        &__reply {
+            font-size: $small-font;
+        }
+
+        &__bar {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            margin-top: .5rem;
+        }
+
+        &__btn {
+            display: flex;
+            align-items: center;
+            padding: .25rem .5rem;
+            font-size: $small-font;
+            cursor: pointer;
+
+            svg {
+                width: 12px;
+                height: 12px;
+                opacity: .65;
+            }
+
+            &--reply {
+                margin-right: auto;
+                background: none;
+                border: none;
+                color: $link-color;
+                border-radius: unset;
+                border-bottom: $link-color 1px solid;
+                transition: $all-transition;
+
+                &:hover {
+                    color: $font-color;
+                    border-bottom-color: $font-color;
+                }
+            }
+
+            &--delete {
+                margin-right: 3.5rem;
+            }
+
+            &--up {
+                margin-right: .25rem;
+            }
+
+            &--down {
+                margin-left: .25rem;
+            }
+        }
+
+        &__votect {
+            margin: 0 1rem;
+            color: $link-color;
+            min-width: 1.5rem;
+            text-align: center;
+        }
+
+        &__rereply {
+            &.hide {
+                display: none;
+            }
+
+            margin-top: 1rem;
+
+            form {
+                display: flex;
+                flex-wrap: wrap;
+                align-items: center;
+                justify-content: flex-end;
+
+                input[type="submit"] {
+                    margin-top: 0;
+                }
+
+                textarea {
+                    margin-bottom: 1rem;
+                }
+            }
+
+            &--cancel {
+                margin-right: auto;
+                font-size: $small-font;
+                background: none;
+                border: none;
+                color: $link-color;
+                border-bottom: 1px solid $link-color;
+                padding: 0 1rem .5rem 1rem;
+                cursor: pointer;
+                transition: $all-transition;
+
+                &:hover {
+                    color: $font-color;
+                    border-bottom-color: $font-color;
+                }
+            }
+        }
     }
 }
