@@ -210,10 +210,8 @@ def comment(id):
                 'text': Markup.escape(form['cm']),
                 'date': datetime.today().strftime('%Y.%m.%d - %H:%M')
             }
-
-            treeComment = exporter.export(AnyNode(data=comment, post_id=id))
             
-            resp = requests.post(API_URL + 'comments/', treeComment, headers=headers)
+            resp = requests.post(API_URL + 'comments/', exporter.export(AnyNode(data=comment, post_id=id)), headers=headers)
 
             if resp.status_code != 201:
                 return redirect(url_for('home', message={'category': 'err', 'msg': 'Something went wrong'}))
