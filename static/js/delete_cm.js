@@ -13,7 +13,7 @@ if (del_button && del_reply_button) {
 
         httpRequest.onreadystatechange = function () {
             if (this.readyState == 4 && this.response == 200) {
-                btn.parentNode.innerHTML = 'This comment was deleted';
+                btn.parentNode.innerHTML = '<p class="comments--comment__text">This comment was deleted</p>';
             } else if (this.readyState == 4) {
                 window.location.replace(this.responseURL);
             }

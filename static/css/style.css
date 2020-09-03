@@ -168,6 +168,10 @@ form input[type="submit"] {
     .posts--post__top span span {
       display: inline-block;
       transition: all 0.25s ease; }
+      .posts--post__top span span svg {
+        margin-left: .5rem;
+        width: 10px;
+        height: 10px; }
   .posts--post__bottom {
     margin-top: .5rem;
     color: rgba(51, 51, 51, 0.45); }
@@ -255,12 +259,12 @@ form input[type="submit"] {
         margin-right: .25rem; }
       .comments--comment__btn--up {
         margin-right: .25rem; }
-        .comments--comment__btn--up.comments--comment__btn--active {
-          color: #27ae60; }
       .comments--comment__btn--down {
         margin-left: .25rem; }
-        .comments--comment__btn--down.comments--comment__btn--active {
-          color: #e74c3c; }
+      .comments--comment__btn--up.active {
+        color: #27ae60; }
+      .comments--comment__btn--down.active {
+        color: #e74c3c; }
       .comments--comment__btn--reply {
         margin-right: auto; }
       .comments--comment__btn--delete {
@@ -272,6 +276,10 @@ form input[type="submit"] {
         border-radius: 5px; }
         .comments--comment__btn--delete:hover, .comments--comment__btn--delete:focus {
           background-color: rgba(231, 76, 60, 0.45); }
+      .comments--comment__btn--disabled {
+        cursor: not-allowed; }
+        .comments--comment__btn--disabled:hover, .comments--comment__btn--disabled:focus {
+          background-color: red; }
     .comments--comment__votect {
       font-size: 1.2rem;
       color: rgba(51, 51, 51, 0.45);
@@ -326,7 +334,8 @@ form input[type="submit"] {
       font-weight: 700;
       margin-bottom: .5rem; }
     .comments--reply__reply {
-      font-size: 1.2rem; }
+      font-size: 1.2rem;
+      margin-bottom: .5rem; }
     .comments--reply__bar {
       display: flex;
       align-items: center;
@@ -354,11 +363,18 @@ form input[type="submit"] {
           color: rgba(51, 51, 51, 0.85);
           border-bottom-color: rgba(51, 51, 51, 0.85); }
       .comments--reply__btn--delete {
-        margin-right: 3.5rem; }
+        margin-left: auto;
+        margin-bottom: 1rem; }
       .comments--reply__btn--up {
         margin-right: .25rem; }
       .comments--reply__btn--down {
         margin-left: .25rem; }
+      .comments--reply__btn--up.active {
+        color: #27ae60; }
+      .comments--reply__btn--down.active {
+        color: #e74c3c; }
+      .comments--reply__btn--disabled {
+        cursor: not-allowed; }
     .comments--reply__votect {
       margin: 0 1rem;
       color: rgba(51, 51, 51, 0.45);

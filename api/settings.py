@@ -9,7 +9,7 @@ MONGO_DBNAME = 'blog'
 
 # * we limit which methods can be used on collections/documents
 RESOURCE_METHODS = ['GET', 'POST']
-ITEM_METHODS = ['GET', 'PATCH', 'DELETE']
+ITEM_METHODS = ['GET', 'PATCH', 'PUT', 'DELETE']
 
 # * Cache-control
 CACHE_CONTROL = 'max-age=20'

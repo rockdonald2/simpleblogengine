@@ -16,13 +16,10 @@ import uuid
 
 """ 
 TODO: 4. Search
-TODO: 5. Like-system
-TODO: 6. Reply-system
 """
 
 """ 
-! bug: if the whole comment tree is deleted, the comments still remain there,
-! bug: we cannot delete a parent comment's first and only child reply
+! bug: if the whole comment tree is deleted, the comments still remain there
 """
 
 # * Starting flask application
@@ -47,7 +44,7 @@ importer = DictImporter()
 # * Environment used in JINJA2 templates
 env = Environment(
     loader=FileSystemLoader('templates/'),
-    autoescape=select_autoescape(['html', 'xml'])
+    autoescape=select_autoescape(['html'])
 )
 
 # * Extensions for the markdown JINJA2 filter
@@ -273,6 +270,7 @@ def comment_delete(id):
             else:
                 relevant = {
                     'data': cm['data'],
+                    'post_id': cm['post_id'],
                     'children': cm['children']
                 }
 
@@ -287,16 +285,14 @@ def comment_delete(id):
                 if searchedReply.children:
                     searchedReply.data['text'] = 'This comment was deleted'
                     searchedReply.data['deleted'] = True
+                    resp = requests.patch(API_URL + 'comments/' + cid, exporter.export(parentComment), headers=headers)
                 else:
                     searchedParent = searchedReply.parent
                     searchedParent.children = tuple(filter(lambda reply: reply.data['reply_id'] != id, searchedParent.children))
-
-                exported = exporter.export(parentComment)
-
-                resp = requests.patch(API_URL + 'comments/' + cid, exported, headers=headers)
+                    resp = requests.put(API_URL + 'comments/' + cid, exporter.export(parentComment), headers=headers)
 
                 if resp.status_code != 200:
-                        return redirect(url_for('home', message={'category': 'err', 'msg': 'Something went wrong'}))
+                    return redirect(url_for('home', message={'category': 'err', 'msg': 'Something went wrong'}))
 
             cache.clear()
             return '200'
@@ -313,44 +309,54 @@ def comment_upvote(id):
     The comment's vote counter is incremented by 1.
     """
 
-    if 'auth' in session:
-        cm = requests.get(API_URL + 'comments/' + id).json()
+    cid = id[:24]
+    sid = id[24:] or None
 
+    if 'auth' in session:
+        cm = requests.get(API_URL + 'comments/' + cid).json()
         headers = {
             "If-Match": cm['_etag'],
             "Content-Type": "application/json"
         }
+        relevant = {
+            'data': cm['data'],
+            'post_id': cm['post_id'],
+            'children': cm['children']
+        }
 
-        currVote = cm['vote']
-        currVoted = cm['voted']
+        parentComment = importer.import_(relevant)
+        relevantComment = None
+
+        if sid == None:
+            # the upvoted entity is a comment
+            relevantComment = parentComment
+        else:
+            # the upvoted entity is a reply
+            relevantComment = find(parentComment, lambda reply: 'reply_id' in reply.data and reply.data['reply_id'] == (cid + sid))
+
         returnCode = None
 
-        if session['auth'][0] in currVoted['upvote']:
-            currVoted['upvote'].pop(currVoted['upvote'].index(session['auth'][0]))
-            currVote -= 1
+        if session['auth'][0] in relevantComment.data['voted']['upvote']:
+            relevantComment.data['voted']['upvote'].pop(relevantComment.data['voted']['upvote'].index(session['auth'][0]))
+            relevantComment.data['vote'] -= 1
             # the post was upvoted, the upvote is cleared - code: 201
 
             returnCode = '201'
-        elif session['auth'][0] in currVoted['downvote']:
-            currVoted['downvote'].pop(currVoted['downvote'].index(session['auth'][0]))
-            currVoted['upvote'].append(session['auth'][0])
-            currVote += 2
+        elif session['auth'][0] in relevantComment.data['voted']['downvote']:
+            relevantComment.data['voted']['downvote'].pop(relevantComment.data['voted']['downvote'].index(session['auth'][0]))
+            relevantComment.data['voted']['upvote'].append(session['auth'][0])
+            relevantComment.data['vote'] += 2
             # the post was downvoted, the user changed it to upvote - code: 202
 
             returnCode = '202'
         else:
-            currVoted['upvote'].append(session['auth'][0])
-            currVote += 1
+            relevantComment.data['voted']['upvote'].append(session['auth'][0])
+            relevantComment.data['vote'] += 1
             # the post wasn't upvoted by the user - code: 200
 
             returnCode = '200'
 
-        edit = {
-            'vote': currVote,
-            'voted': currVoted
-        }
-
-        resp = requests.patch(API_URL + 'comments/' + id, dumps(edit), headers=headers)
+        resp = requests.patch(API_URL + 'comments/' + cid, exporter.export(parentComment), headers=headers)
 
         if resp.status_code != 200:
             return redirect(url_for('home', message={'category': 'err', 'msg': 'Something went wrong'}))
@@ -367,44 +373,54 @@ def comment_downvote(id):
     The comment's vote counter is decremented by one.
     """
 
-    if 'auth' in session:
-        cm = requests.get(API_URL + 'comments/' + id).json()
+    cid = id[:24]
+    sid = id[24:] or None
 
+    if 'auth' in session:
+        cm = requests.get(API_URL + 'comments/' + cid).json()
         headers = {
             "If-Match": cm['_etag'],
             "Content-Type": "application/json"
         }
+        relevant = {
+            'data': cm['data'],
+            'post_id': cm['post_id'],
+            'children': cm['children']
+        }
 
-        currVote = cm['vote']
-        currVoted = cm['voted']
+        parentComment = importer.import_(relevant)
+        relevantComment = None
+
+        if sid == None:
+            # the upvoted entity is a comment
+            relevantComment = parentComment
+        else:
+            # the upvoted entity is a reply
+            relevantComment = find(parentComment, lambda reply: 'reply_id' in reply.data and reply.data['reply_id'] == (cid + sid))
+
         returnCode = None
 
-        if session['auth'][0] in currVoted['downvote']:
-            currVoted['downvote'].pop(currVoted['downvote'].index(session['auth'][0]))
-            currVote += 1
+        if session['auth'][0] in relevantComment.data['voted']['downvote']:
+            relevantComment.data['voted']['downvote'].pop(relevantComment.data['voted']['downvote'].index(session['auth'][0]))
+            relevantComment.data['vote'] += 1
             # the post was downvoted, the downvote is cleared - code: 201
 
             returnCode = '201'
-        elif session['auth'][0] in currVoted['upvote']:
-            currVoted['upvote'].pop(currVoted['upvote'].index(session['auth'][0]))
-            currVoted['downvote'].append(session['auth'][0])
-            currVote -= 2
+        elif session['auth'][0] in relevantComment.data['voted']['upvote']:
+            relevantComment.data['voted']['upvote'].pop(relevantComment.data['voted']['upvote'].index(session['auth'][0]))
+            relevantComment.data['voted']['downvote'].append(session['auth'][0])
+            relevantComment.data['vote'] -= 2
             # the post was upvoted, the user changed it to downvote - code: 202
 
             returnCode = '202'
         else:
-            currVoted['downvote'].append(session['auth'][0])
-            currVote -= 1
+            relevantComment.data['voted']['downvote'].append(session['auth'][0])
+            relevantComment.data['vote'] -= 1
             # the post wasn't downvoted by the user - code: 200
 
             returnCode = '200'
 
-        edit = {
-            'vote': currVote,
-            'voted': currVoted
-        }
-
-        resp = requests.patch(API_URL + 'comments/' + id, dumps(edit), headers=headers)
+        resp = requests.patch(API_URL + 'comments/' + cid, exporter.export(parentComment), headers=headers)
 
         if resp.status_code != 200:
             return redirect(url_for('home', message={'category': 'err', 'msg': 'Something went wrong'}))
@@ -414,19 +430,23 @@ def comment_downvote(id):
         return redirect(url_for('home', message={'category': 'err', 'msg': 'You\'re not allowed to vote a comment without logging in first'}))
 
 
-@app.route('/comment/reply&<id>&<sid>', methods=['GET', 'POST'])
-def reply_comment(id, sid):
+@app.route('/comment/reply&<id>', methods=['GET', 'POST'])
+def reply_comment(id):
     """
     Allows the user to reply to a specific comment, which will appear on the website hierarchically.
     To describe the problem hierarchically we need to use some sort of tree.
     """
 
+    cid = id[:24]
+    sid = id[24:] or None
+
     if 'auth' in session:
-        cm = requests.get(API_URL + 'comments/' + id).json()
+        cm = requests.get(API_URL + 'comments/' + cid).json()
 
         if request.method == 'POST':
             relevant = {
                 'data': cm['data'],
+                'post_id': cm['post_id'],
                 'children': cm['children']
             }
             form = request.form
@@ -434,7 +454,7 @@ def reply_comment(id, sid):
             parentComment = importer.import_(relevant)
             
             if parentComment.children and sid:
-                searchedReply = find(parentComment, lambda reply: 'reply_id' in reply.data and reply.data['reply_id'] == sid)
+                searchedReply = find(parentComment, lambda reply: 'reply_id' in reply.data and reply.data['reply_id'] == (cid + sid))
             else:
                 searchedReply = False
 
@@ -442,8 +462,10 @@ def reply_comment(id, sid):
                 'author': session['auth'][1],
                 'text': Markup.escape(form['rcm']),
                 'date': datetime.today().strftime('%Y.%m.%d - %H:%M'),
-                'reply_id': id + str(uuid.uuid4()),
-                'deleted': False
+                'reply_id': cid + str(uuid.uuid4()),
+                'deleted': False,
+                'vote': 0,
+                'voted': {'upvote': [], 'downvote': []}
             }
 
             if searchedReply:
@@ -456,7 +478,7 @@ def reply_comment(id, sid):
                 "Content-Type": "application/json"
             }
 
-            resp = requests.patch(API_URL + 'comments/' + id, exporter.export(parentComment), headers=headers)
+            resp = requests.patch(API_URL + 'comments/' + cid, exporter.export(parentComment), headers=headers)
 
             if resp.status_code != 200:
                 return redirect(url_for('home', message={'category': 'err', 'msg': 'Something went wrong'}))

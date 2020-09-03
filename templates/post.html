@@ -1,6 +1,8 @@
 {% extends "base.html" %}
 
 {% block content %}
+
+
 <header class="header">
     <a href="/home"
         class="link header--link">Home</a>
@@ -10,10 +12,16 @@
     {% endif %}
     <h1 class="header--heading">{{ post.title }} </h1>
 </header>
+
+
 <article class="post markdown-body">
     {{ post.text|markdown }}
 </article>
+
+
 <section class="comments">
+
+
     {% if session['auth'] %}
     <form action="/comment&{{ id }}"
         method="POST"
@@ -28,6 +36,8 @@
             value="Comment">
     </form>
     {% endif %}
+
+
     {% if comments %}
     {% for comment in comments %}
     <div class="comments--comment">
@@ -47,8 +57,9 @@
             {% if 'auth' in session %}
             <button class="comments--comment__btn comments--comment__btn--reply">Reply</button>
             <button class="comments--comment__btn comments--comment__btn--up 
-            {{ 'comments--comment__btn--active' if session['auth'][0] in comment.data['voted']['upvote'] }}"
-                data-cm="{{ comment['_id'] }}">
+            {{ 'active' if session['auth'][0] in comment.data['voted']['upvote'] }}
+            {{ 'comments--reply__btn--disabled' if comment.data['deleted'] }}"
+                data-cm="{{ comment['_id'] }}" {{ 'disabled' if comment.data['deleted'] }}>
                 <svg xmlns="http://www.w3.org/2000/svg"
                     viewBox="0 0 20 20"
                     fill="currentColor">
@@ -62,8 +73,9 @@
             </p>
             {% if 'auth' in session %}
             <button class="comments--comment__btn comments--comment__btn--down
-            {{ 'comments--comment__btn--active' if session['auth'][0] in comment.data['voted']['downvote'] }}"
-                data-cm="{{ comment['_id'] }}"><svg xmlns="http://www.w3.org/2000/svg"
+            {{ 'active' if session['auth'][0] in comment.data['voted']['downvote'] }}
+            {{ 'comments--reply__btn--disabled' if comment.data['deleted'] }}"
+                data-cm="{{ comment['_id'] }}" {{ 'disabled' if comment.data['deleted'] }}><svg xmlns="http://www.w3.org/2000/svg"
                     viewBox="0 0 20 20"
                     fill="currentColor">
                     <path fill-rule="evenodd"
@@ -88,16 +100,17 @@
             </form>
         </div>
         {% endif %}
+
+
         {% if comment.children %}
         {% for subcomment in comment['children'] recursive %}
         <div class="comments--reply">
             <p class="comments--reply__author">{{ subcomment['data']['author'] }} replied:</p>
-            <p class="comments--reply__reply">{{ subcomment['data']['text'] }}</p>
-            <div class="comments--reply__bar">
-                {% if 'auth' in session %}
-                <button class="comments--reply__btn comments--reply__btn--reply">Reply</button>
+            <div>
+                <p class="comments--reply__reply">{{ subcomment['data']['text'] }}</p>
                 {% if 'auth' in session and (session['auth'][1] == subcomment.data.author or session['auth'][1] == post.author) and not subcomment.data.deleted %}
-                <button class="comments--reply__btn comments--reply__btn--delete" data-cm="{{ subcomment['data']['reply_id'] }}"><svg xmlns="http://www.w3.org/2000/svg"
+                <button class="comments--reply__btn comments--reply__btn--delete"
+                    data-cm="{{ subcomment['data']['reply_id'] }}"><svg xmlns="http://www.w3.org/2000/svg"
                         fill="none"
                         viewBox="0 0 24 24"
                         stroke="currentColor">
@@ -107,9 +120,14 @@
                             d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                     </svg></button>
                 {% endif %}
+            </div>
+            <div class="comments--reply__bar">
+                {% if 'auth' in session %}
+                <button class="comments--reply__btn comments--reply__btn--reply">Reply</button>
                 <button class="comments--reply__btn comments--reply__btn--up
-                {{ 'comments--reply__btn--active' if session['auth'][0] in comment.data['voted']['upvote'] }}"
-                    data-cm="{{ comment['_id'] }}"><svg xmlns="http://www.w3.org/2000/svg"
+                {{ 'active' if session['auth'][0] in subcomment.data['voted']['upvote'] }}
+                {{ 'comments--reply__btn--disabled' if subcomment.data['deleted'] }}"
+                    data-cm="{{ subcomment['data']['reply_id'] }}" {{ 'disabled' if subcomment.data['deleted'] }}><svg xmlns="http://www.w3.org/2000/svg"
                         viewBox="0 0 20 20"
                         fill="currentColor">
                         <path fill-rule="evenodd"
@@ -117,12 +135,13 @@
                             clip-rule="evenodd" />
                     </svg></button>
                 {% endif %}
-                <p class="comments--reply__votect">{{ '{0:{1}}'.format(comment.data['vote'], '+' if comment.data['vote'] else
+                <p class="comments--reply__votect">{{ '{0:{1}}'.format(subcomment.data['vote'], '+' if subcomment.data['vote'] else
                     '') }}</p>
                 {% if 'auth' in session %}
                 <button class="comments--reply__btn comments--reply__btn--down
-                {{ 'comments--reply__btn--active' if session['auth'][0] in comment.data['voted']['downvote'] }}"
-                    data-cm="{{ comment['_id'] }}"><svg xmlns="http://www.w3.org/2000/svg"
+                {{ 'active' if session['auth'][0] in subcomment.data['voted']['downvote'] }}
+                {{ 'comments--reply__btn--disabled' if subcomment.data['deleted'] }}"
+                    data-cm="{{ subcomment['data']['reply_id'] }}" {{ 'disabled' if subcomment.data['deleted'] }}><svg xmlns="http://www.w3.org/2000/svg"
                         viewBox="0 0 20 20"
                         fill="currentColor">
                         <path fill-rule="evenodd"
@@ -133,7 +152,7 @@
             </div>
             {% if 'auth' in session %}
             <div class="comments--reply__rereply hide">
-                <form action="/comment/reply&{{ comment['_id'] }}&{{ subcomment['data']['reply_id'] }}"
+                <form action="/comment/reply&{{ subcomment['data']['reply_id'] }}"
                     method="POST">
                     <textarea name="rcm"
                         id="rcm"
@@ -153,12 +172,20 @@
         </div>
         {% endfor %}
         {% endif %}
+
+
     </div>
+
+
     {% endfor %}
     {% else %}
     <p class="comments--empty">There are no comments yet</p>
     {% endif %}
+
+
 </section>
+
+
 {% if 'auth' in session %}
 <script src="../static/js/delete_cm.js"
     defer></script>
@@ -167,4 +194,6 @@
 <script src="../static/js/reply.js"
     defer></script>
 {% endif %}
+
+
 {% endblock %}
