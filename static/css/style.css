@@ -20,14 +20,17 @@
   color: inherit; }
 
 html {
-  font-size: 10px; }
-  @media only screen and (max-width: 375px) {
+  font-size: 11px; }
+  @media only screen and (max-width: 700px) {
+    html {
+      font-size: 10px; } }
+  @media only screen and (max-width: 400px) {
     html {
       font-size: 9px; } }
 
 body {
   box-sizing: border-box;
-  font-family: 'Noto Sans JP', sans-serif;
+  font-family: 'Noto Sans JP', sans-serif;
   background-color: #fafafa;
   line-height: 2;
   color: rgba(51, 51, 51, 0.85); }
@@ -138,6 +141,18 @@ form input[type="submit"] {
     background-color: rgba(51, 51, 51, 0.45);
     color: #fafafa; }
 
+form textarea,
+input[type="text"],
+input[type="password"],
+input[type="email"] {
+  font-size: 1.5rem; }
+  @media only screen and (max-width: 475px) {
+    form textarea,
+    input[type="text"],
+    input[type="password"],
+    input[type="email"] {
+      font-size: 1.2rem; } }
+
 /* 
 * Anything closely related to posts go here, including home cards, and post texts
 */
@@ -220,6 +235,9 @@ form input[type="submit"] {
       display: flex;
       justify-content: space-between;
       padding: 1rem; }
+      @media only screen and (max-width: 475px) {
+        .comments--comment__top, .comments--comment__bottom {
+          padding: .75rem; } }
     .comments--comment__top {
       align-items: flex-start; }
     .comments--comment__bottom {
@@ -253,10 +271,13 @@ form input[type="submit"] {
       padding: .25rem .5rem;
       transition: all 0.25s ease; }
       .comments--comment__btn svg {
-        width: 16px;
-        height: 16px;
+        width: 1.6rem;
+        height: 1.6rem;
         opacity: .65;
         margin-right: .25rem; }
+        @media only screen and (max-width: 475px) {
+          .comments--comment__btn svg {
+            margin-right: 0; } }
       .comments--comment__btn--up {
         margin-right: .25rem; }
       .comments--comment__btn--down {
@@ -278,14 +299,18 @@ form input[type="submit"] {
           background-color: rgba(231, 76, 60, 0.45); }
       .comments--comment__btn--disabled {
         cursor: not-allowed; }
-        .comments--comment__btn--disabled:hover, .comments--comment__btn--disabled:focus {
-          background-color: red; }
+      @media only screen and (max-width: 475px) {
+        .comments--comment__btn--text {
+          display: none; } }
     .comments--comment__votect {
       font-size: 1.2rem;
       color: rgba(51, 51, 51, 0.45);
       margin: 0 1rem;
       min-width: 2.5rem;
       text-align: center; }
+      @media only screen and (max-width: 475px) {
+        .comments--comment__votect {
+          margin: 0 .75rem; } }
     .comments--comment__reply.hide {
       display: none; }
     .comments--comment__reply form {
@@ -315,7 +340,8 @@ form input[type="submit"] {
         color: rgba(51, 51, 51, 0.85);
         border-bottom-color: rgba(51, 51, 51, 0.85); }
   .comments--empty {
-    font-size: 1.2rem; }
+    font-size: 1.2rem;
+    color: rgba(51, 51, 51, 0.45); }
   .comments textarea {
     width: 100%;
     height: 10rem;
@@ -328,8 +354,14 @@ form input[type="submit"] {
     border-top: rgba(51, 51, 51, 0.45) 1px solid; }
   .comments--reply {
     padding: 1.5rem 0 0 1.5rem; }
+    @media only screen and (max-width: 475px) {
+      .comments--reply {
+        padding: 1rem 0 0 .75rem; } }
     .comments--reply > div.comments--reply {
       padding-left: 2.5rem; }
+      @media only screen and (max-width: 475px) {
+        .comments--reply > div.comments--reply {
+          padding-left: 1.75rem; } }
     .comments--reply__author {
       font-weight: 700;
       margin-bottom: .5rem; }
@@ -348,8 +380,8 @@ form input[type="submit"] {
       font-size: 1.2rem;
       cursor: pointer; }
       .comments--reply__btn svg {
-        width: 12px;
-        height: 12px;
+        width: 1.2rem;
+        height: 1.2rem;
         opacity: .65; }
       .comments--reply__btn--reply {
         margin-right: auto;
@@ -364,7 +396,13 @@ form input[type="submit"] {
           border-bottom-color: rgba(51, 51, 51, 0.85); }
       .comments--reply__btn--delete {
         margin-left: auto;
-        margin-bottom: 1rem; }
+        margin-bottom: 1rem;
+        background-color: rgba(231, 76, 60, 0.15);
+        border: rgba(51, 51, 51, 0.45) 1px solid;
+        border-radius: 5px;
+        transition: all 0.25s ease; }
+        .comments--reply__btn--delete:hover, .comments--reply__btn--delete:focus {
+          background-color: rgba(231, 76, 60, 0.45); }
       .comments--reply__btn--up {
         margin-right: .25rem; }
       .comments--reply__btn--down {
@@ -380,6 +418,9 @@ form input[type="submit"] {
       color: rgba(51, 51, 51, 0.45);
       min-width: 1.5rem;
       text-align: center; }
+      @media only screen and (max-width: 475px) {
+        .comments--reply__votect {
+          margin: 0 .75rem; } }
     .comments--reply__rereply {
       margin-top: 1rem; }
       .comments--reply__rereply.hide {
@@ -500,6 +541,14 @@ form input[type="submit"] {
     background-color: rgba(255, 252, 246, 0.1);
     border: rgba(51, 51, 51, 0.45) 1px solid;
     border-radius: 5px; }
+    @media only screen and (max-width: 475px) {
+      .login form input[type="email"],
+      .login form input[type="password"],
+      .login form input[type="text"],
+      .register form input[type="email"],
+      .register form input[type="password"],
+      .register form input[type="text"] {
+        font-size: 1.2rem; } }
   .login form input[type="email"],
   .login form input[type="password"],
   .login form input[type="text"],

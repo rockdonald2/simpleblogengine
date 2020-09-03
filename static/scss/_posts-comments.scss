@@ -79,8 +79,6 @@
     }
 }
 
-.post {}
-
 .comments {
     margin-top: 2.5rem;
     padding-top: 2.5rem;
@@ -130,6 +128,10 @@
             display: flex;
             justify-content: space-between;
             padding: 1rem;
+
+            @include responsive(475px) {
+                padding: .75rem;
+            }
         }
 
         &__top {
@@ -178,10 +180,14 @@
             transition: $all-transition;
 
             svg {
-                width: 16px;
-                height: 16px;
+                width: 1.6rem;
+                height: 1.6rem;
                 opacity: .65;
                 margin-right: .25rem;
+
+                @include responsive(475px) {
+                    margin-right: 0;
+                }
             }
 
             &--up {
@@ -190,7 +196,6 @@
 
             &--down {
                 margin-left: .25rem;
-
             }
 
             &--up.active {
@@ -221,10 +226,11 @@
 
             &--disabled {
                 cursor: not-allowed;
+            }
 
-                &:hover,
-                &:focus {
-                    background-color: red;
+            &--text {
+                @include responsive(475px) {
+                    display: none;
                 }
             }
         }
@@ -235,6 +241,10 @@
             margin: 0 1rem;
             min-width: 2.5rem;
             text-align: center;
+
+            @include responsive(475px) {
+                margin: 0 .75rem;
+            }
         }
 
         &__reply {
@@ -282,6 +292,7 @@
 
     &--empty {
         font-size: $small-font;
+        color: $link-color;
     }
 
     textarea {
@@ -301,8 +312,16 @@
     &--reply {
         padding: 1.5rem 0 0 1.5rem;
 
+        @include responsive(475px) {
+            padding: 1rem 0 0 .75rem;
+        }
+
         & > div.comments--reply {
             padding-left: 2.5rem;
+
+            @include responsive(475px) {
+                padding-left: 1.75rem;
+            }
         }
 
         &__author {
@@ -330,8 +349,8 @@
             cursor: pointer;
 
             svg {
-                width: 12px;
-                height: 12px;
+                width: 1.2rem;
+                height: 1.2rem;
                 opacity: .65;
             }
 
@@ -353,6 +372,15 @@
             &--delete {
                 margin-left: auto;
                 margin-bottom: 1rem;
+                background-color: rgba($error-color, .15);
+                border: $link-color 1px solid;
+                border-radius: 5px;
+                transition: $all-transition;
+
+                &:hover,
+                &:focus {
+                    background-color: rgba($error-color, .45);
+                }
             }
 
             &--up {
@@ -381,6 +409,10 @@
             color: $link-color;
             min-width: 1.5rem;
             text-align: center;
+
+            @include responsive(475px) {
+                margin: 0 .75rem;
+            }
         }
 
         &__rereply {

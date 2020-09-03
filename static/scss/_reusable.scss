@@ -44,3 +44,14 @@ form input[type="submit"] {
         color: $bg-color;
     }
 }
+
+form textarea,
+input[type="text"],
+input[type="password"],
+input[type="email"] {
+    font-size: $medium-font;
+
+    @include responsive(475px) {
+        font-size: $small-font;
+    }
+}

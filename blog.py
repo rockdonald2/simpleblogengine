@@ -63,9 +63,14 @@ env.filters['markdown'] = lambda text: Markup(md.convert(text))
 env.trim_blocks = True
 env.lstrip_blocks = True
 
+# * cache each opened post for 2 minutes
+# * cache only works for unlogged users, for logged in users the caching mechanism is bypassed
+def check_login():
+    return 'auth' in session
+
 # * Cache current posts for 2 minutes
 # * This also results in new posts not appearing for 2 minutes after publishing
-@cache.cached(timeout=120, key_prefix='all_posts')
+@cache.cached(timeout=120, key_prefix='all_posts', unless=check_login)
 def get_all_posts():
     posts = requests.get(API_URL + 'posts?projection={"text": 0}').json()['_items']
     return posts
@@ -170,12 +175,6 @@ def logout():
     session.pop('auth', None)
     return redirect(url_for('home', message={'category': 'gr', 'msg': 'You\'ve successfully logged out!'}))
 
-
-# * cache each opened post for 2 minutes
-# * cache only works for unlogged users, for logged in users the caching mechanism is bypassed
-def check_login():
-    return 'auth' in session
-
 @app.route('/post/<id>', methods=['GET'])
 @cache.cached(timeout=120, unless=check_login)
 def post(id):
@@ -219,11 +218,8 @@ def comment(id):
             if resp.status_code != 201:
                 return redirect(url_for('home', message={'category': 'err', 'msg': 'Something went wrong'}))
 
-        post_template = env.get_template('post.html')
-        p = requests.get(API_URL + 'posts/' + id).json()
-        comments = requests.get(API_URL + 'comments?where={"post_id":"' + id + '"}').json()['_items']
         cache.clear()
-        return post_template.render(title=p['title'], post=p, session=session, id=id, comments=comments)
+        return redirect(url_for('post', id=id))
     else:
         return redirect(url_for('home', message={'category': 'err', 'msg': 'You\'re not logged in to comment on this post'}))
 
@@ -483,11 +479,8 @@ def reply_comment(id):
             if resp.status_code != 200:
                 return redirect(url_for('home', message={'category': 'err', 'msg': 'Something went wrong'}))
 
-        post_template = env.get_template('post.html')
-        p = requests.get(API_URL + 'posts/' + cm['post_id']).json()
-        comments = requests.get(API_URL + 'comments?where={"post_id":"' + cm['post_id'] + '"}').json()['_items']
         cache.clear()
-        return post_template.render(title=p['title'], post=p, session=session, id=cm['post_id'], comments=comments)
+        return redirect(url_for('post', id=cm['post_id']))
     else:
         return redirect(url_for('home', message={'category': 'err', 'msg': 'Sign in first to reply to a comment'}))
 

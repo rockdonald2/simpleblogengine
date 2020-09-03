@@ -21,6 +21,10 @@
             background-color: $input-background;
             border: $link-color 1px solid;
             border-radius: 5px;
+
+            @include responsive(475px) {
+                font-size: $small-font;
+            }
         }
 
         input[type="email"],
