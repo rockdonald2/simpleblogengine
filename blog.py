@@ -1,4 +1,4 @@
-from flask import Flask, request, url_for, redirect, session
+from flask import Flask, request, url_for, redirect, session, abort
 from flask_caching import Cache
 from jinja2 import Environment, FileSystemLoader, select_autoescape, Markup
 import requests
@@ -9,17 +9,22 @@ from os import urandom
 from datetime import datetime, timedelta
 from re import fullmatch, compile
 from json import dumps
-from anytree import AnyNode, find
+from anytree import AnyNode, find, LevelOrderIter
 from anytree.exporter import JsonExporter
 from anytree.importer import DictImporter
 import uuid
 
 """ 
-TODO: 4. Search
+TODO: -
 """
 
 """ 
 ! bug: if the whole comment tree is deleted, the comments still remain there
+? we can solve this bug, by checking every time one parent is going to be deleted that whether the parent's children nodes are also deleted,
+? if so, we can delete the whole tree
+? A partial solution is the one mentioned above, a more thorough solution would be a deep check every time a comment is deleted
+? But, it's widely unnecessary so to say, because it's very unlikely that a whole tree will be deleted
+? The deep-check can be interchanged with a timed deep-check, made possible with a function call
 """
 
 # * Starting flask application
@@ -63,6 +68,16 @@ env.filters['markdown'] = lambda text: Markup(md.convert(text))
 env.trim_blocks = True
 env.lstrip_blocks = True
 
+
+@app.errorhandler(404)
+@app.errorhandler(405)
+@app.errorhandler(500)
+@app.errorhandler(403)
+def error_handler(e):
+    error_template = env.get_template('error.html')
+    return error_template.render(title=str(e))
+
+
 # * cache each opened post for 2 minutes
 # * cache only works for unlogged users, for logged in users the caching mechanism is bypassed
 def check_login():
@@ -75,19 +90,47 @@ def get_all_posts():
     posts = requests.get(API_URL + 'posts?projection={"text": 0}').json()['_items']
     return posts
 
+
 @app.route('/', methods=['GET'])
 @app.route('/home', methods=['GET'])
+@app.route('/search', methods=['GET', 'POST'])
 def home():
     """
     Index route, where the page loads,
     can take in a message in the form of a query string.
-    The posts are cached for 2 minutes after loading.
+    The posts are cached for 2 minutes after loading, for users that aren't logged in.
     """
 
-    cached_posts = get_all_posts()
+    posts = None
+
+    # * this form only appears if we access the route via search
+    form = request.form
+    if form:
+        keywords = [Markup(word).striptags() for word in form['words'].split(' ') if len(word) >= 3]
+        posts = get_all_posts()
+        filtered_posts = []
+
+        for p in posts:
+            flag = True
+            for k in keywords:
+                if p['title'].find(k) == -1:
+                    flag = False
+
+                if not flag:
+                    break
+
+            if flag:
+                filtered_posts.append(p)
+
+        posts = filtered_posts
+    else:
+        posts = get_all_posts()
+
+    posts.sort(key=lambda p: p['date'], reverse=True)
+
     home_template = env.get_template('home.html')
     message = eval(request.args.get('message')) if request.args.get('message') else None 
-    return home_template.render(title='A Simple Blog Engine', posts=cached_posts, session=session, message=message)
+    return home_template.render(title='A Simple Blog Engine', posts=posts, session=session, message=message)
     
 
 @app.route('/login', methods=['POST', 'GET'])
@@ -152,7 +195,7 @@ def register():
         
         user = {
             'email': form['email'],
-            'name': Markup.escape(form['name']),
+            'name': Markup(form['name']).striptags(),
             'pwd': hashpw(form['pwd'].encode('utf-8'), gensalt()),
             'writer': False
         }
@@ -175,6 +218,7 @@ def logout():
     session.pop('auth', None)
     return redirect(url_for('home', message={'category': 'gr', 'msg': 'You\'ve successfully logged out!'}))
 
+
 @app.route('/post/<id>', methods=['GET'])
 @cache.cached(timeout=120, unless=check_login)
 def post(id):
@@ -184,8 +228,16 @@ def post(id):
     """
 
     post_template = env.get_template('post.html')
-    p = requests.get(API_URL + 'posts/' + id).json()
+    p = requests.get(API_URL + 'posts/' + id)
+
+    if p.status_code == 404:
+        abort(404, "Post not found")
+    else:
+        p = p.json()
+
     comments = requests.get(API_URL + 'comments?where={"post_id":"' + id + '"}').json()['_items']
+
+    comments.sort(reverse=True, key=lambda c: c['data']['vote'])
 
     return post_template.render(title=p['title'], post=p, session=session, id=id, comments=comments)
 
@@ -207,7 +259,7 @@ def comment(id):
 
             comment = {
                 'author': session['auth'][1],
-                'text': Markup.escape(form['cm']),
+                'text': Markup(form['cm']).striptags(),
                 'date': datetime.today().strftime('%Y.%m.%d - %H:%M')
             }
             
@@ -220,6 +272,52 @@ def comment(id):
         return redirect(url_for('post', id=id))
     else:
         return redirect(url_for('home', message={'category': 'err', 'msg': 'You\'re not logged in to comment on this post'}))
+
+
+def childs_are_deleted(pc):
+    """ 
+    Checks whether a specific parent comment's/reply's child replies are deleted or not.
+    Returns True if they are, otherwise False.
+    """
+
+    # if this array is empty after the iteration, then all of the leafs are deleted
+    check_arr = [reply.data['reply_id'] for reply in LevelOrderIter(pc, filter_= lambda reply: 'reply_id' in reply.data and not reply.data['deleted'] and reply != pc)]
+
+    return len(check_arr) == 0
+
+def deep_check_comments(pc):
+    """ 
+    Checks whether a specific parent comment's child replies are deleted.
+    The pc argument has to be a root element.
+    If the arguments isn't a root element, then it always returns False
+    Returns True if they are, otherwise False.
+    """
+
+    if pc.is_root:
+        return pc.data['deleted'] and childs_are_deleted(pc)
+    else:
+        return False
+
+def make_deep_check():
+    """ 
+    This function has to be called to perform a deep check on comments.
+    This function checks all of the comments from the database, regardless the posts. 
+    """
+
+    comments = requests.get(API_URL + 'comments/').json()['_items']
+
+    for c in comments:
+        # * If the whole tree is deleted, than delete from the database
+        # * Otherwise do nothing
+        if deep_check_comments(importer.import_({
+            'data': c['data'],
+            'post_id': c['post_id'],
+            'children': c['children']
+        })):
+            resp = requests.delete(API_URL + 'comments/' + c['_id'], headers={"If-Match": c['_etag']})
+            
+# ! Now it is left on, which means each time the server is restarted, and first run, the function is called
+make_deep_check()
 
 
 @app.route('/comment/delete&<id>', methods=['POST'])
@@ -236,47 +334,63 @@ def comment_delete(id):
 
     if 'auth' in session:
         cm = requests.get(API_URL + 'comments/' + cid).json()
+        postAuthor = requests.get(API_URL + 'posts/' + cm['post_id']).json()['author']
 
-        if session['auth'][1] == cm['data']['author'] or session['auth'][1] == requests.get(API_URL + 'posts/' + cm['post_id']).json()['author']:
-            headers = {
-                "If-Match": cm['_etag'],
-                "Content-Type": "application/json"
-            }
+        headers = {
+            "If-Match": cm['_etag'],
+            "Content-Type": "application/json"
+        }
 
-            if sid == None:
+        relevant = {
+            'data': cm['data'],
+            'post_id': cm['post_id'],
+            'children': cm['children']
+        }
+
+        if sid == None:
+            # * Post is a comment
+            if session['auth'][1] == cm['data']['author'] or session['auth'][1] == postAuthor:
+                # * Has no child replies
                 if not cm['children']:
                     resp = requests.delete(API_URL + 'comments/' + cid, headers=headers)
 
                     if resp.status_code != 204:
                         return redirect(url_for('home', message={'category': 'err', 'msg': 'Something went wrong'}))
+                # * Has child replies
                 else:
-                    edit = {
-                        'data': {
-                            'text': 'This comment was deleted',
-                            'deleted': True
+                    # * Check whether all of its child replies are deleted or not
+                    resp = None
+                    
+                    parentComment = importer.import_(relevant)
+
+                    # * If they are, then delete the whole tree
+                    if childs_are_deleted(parentComment):
+                        resp = requests.delete(API_URL + 'comments/' + cid, headers=headers)
+                    # * If not, then only change the comments text to deleted
+                    else:
+                        edit = {
+                            'data': {
+                                'text': 'This comment was deleted',
+                                'deleted': True
+                            }
                         }
-                    }
 
-                    resp = requests.patch(API_URL + 'comments/' + cid, dumps(edit), headers=headers)
+                        resp = requests.patch(API_URL + 'comments/' + cid, dumps(edit), headers=headers)
 
-                    if resp.status_code != 200:
+                    if resp.status_code != 200 and resp.status_code != 204:
                         return redirect(url_for('home', message={'category': 'err', 'msg': 'Something went wrong'}))
             else:
-                relevant = {
-                    'data': cm['data'],
-                    'post_id': cm['post_id'],
-                    'children': cm['children']
-                }
+                return redirect(url_for('home', message={'category': 'err', 'msg': 'You\'re not allowed to do that'}))
+        else:
+            # * Post is a reply
 
-                headers = {
-                    "If-Match": cm['_etag'],
-                    "Content-Type": "application/json"
-                }
+            parentComment = importer.import_(relevant)
+            searchedReply = find(parentComment, lambda reply: 'reply_id' in reply.data and reply.data['reply_id'] == id)
 
-                parentComment = importer.import_(relevant)
-                searchedReply = find(parentComment, lambda reply: 'reply_id' in reply.data and reply.data['reply_id'] == id)
+            if session['auth'][1] == searchedReply.data['author'] or session['auth'][1] == postAuthor:
+                resp = None
 
-                if searchedReply.children:
+                if searchedReply.children and not childs_are_deleted(searchedReply):
                     searchedReply.data['text'] = 'This comment was deleted'
                     searchedReply.data['deleted'] = True
                     resp = requests.patch(API_URL + 'comments/' + cid, exporter.export(parentComment), headers=headers)
@@ -287,11 +401,11 @@ def comment_delete(id):
 
                 if resp.status_code != 200:
                     return redirect(url_for('home', message={'category': 'err', 'msg': 'Something went wrong'}))
+            else:
+                return redirect(url_for('home', message={'category': 'err', 'msg': 'You\'re not allowed to do that'}))
 
-            cache.clear()
-            return '200'
-        else:
-            return redirect(url_for('home', message={'category': 'err', 'msg': 'You\'re not allowed to do that'}))
+        cache.clear()
+        return '200'
     else:
         return redirect(url_for('home', message={'category': 'err', 'msg': 'You\'re not allowed to do that'}))
 
@@ -454,7 +568,7 @@ def reply_comment(id):
 
             reply = {
                 'author': session['auth'][1],
-                'text': Markup.escape(form['rcm']),
+                'text': Markup(form['rcm']).striptags(),
                 'date': datetime.today().strftime('%Y.%m.%d - %H:%M'),
                 'reply_id': cid + str(uuid.uuid4()),
                 'deleted': False,
@@ -494,7 +608,7 @@ def write():
             form = request.form
             if form['post'] != '':
                 post = {
-                    'title': Markup.escape(form['title']),
+                    'title': Markup(form['title']).striptags(),
                     'text': form['post'] ,
                     'date': datetime.today().strftime('%Y.%m.%d'),
                     'author': session['auth'][1]
@@ -538,7 +652,7 @@ def edit(id):
                 }
 
                 post = {
-                    "title": Markup.escape(form['title']),
+                    "title": Markup(form['title']).striptags(),
                     "text": form['post']
                 }
 
@@ -581,7 +695,7 @@ def delete(id):
         return redirect(url_for('home', message={'category': 'gr', 'msg': 'Your post was successfully deleted'}))
     else:
         return redirect(url_for('home', message={'category': 'err', 'msg': 'You\'re not logged in'}))
-
+    
 
 # * the program starts here
 if __name__ == '__main__':

@@ -16,9 +16,10 @@
     }
 
     &--link {
-        display: inline-block;
         text-align: right;
         font-size: $medium-font;
+        display: flex;
+        align-items: center;
     }
 
     &--heading {

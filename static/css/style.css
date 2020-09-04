@@ -30,7 +30,7 @@ html {
 
 body {
   box-sizing: border-box;
-  font-family: 'Noto Sans JP', sans-serif;
+  font-family: 'Noto Sans JP', sans-serif;
   background-color: #fafafa;
   line-height: 2;
   color: rgba(51, 51, 51, 0.85); }
@@ -69,9 +69,10 @@ body {
     text-align: right;
     cursor: default; }
   .header--link {
-    display: inline-block;
     text-align: right;
-    font-size: 1.5rem; }
+    font-size: 1.5rem;
+    display: flex;
+    align-items: center; }
   .header--heading {
     font-size: 3.6rem;
     align-self: flex-start;
@@ -127,6 +128,10 @@ body {
       background-color: rgba(51, 51, 51, 0.85); }
     .link:hover span {
       transform: translateX(0.25rem); }
+  .link svg {
+    width: 1.6rem;
+    height: 1.6rem;
+    margin-right: .5rem; }
 
 form input[type="submit"] {
   padding: 1rem;
@@ -142,15 +147,15 @@ form input[type="submit"] {
     color: #fafafa; }
 
 form textarea,
-input[type="text"],
-input[type="password"],
-input[type="email"] {
+form input[type="text"],
+form input[type="password"],
+form input[type="email"] {
   font-size: 1.5rem; }
   @media only screen and (max-width: 475px) {
     form textarea,
-    input[type="text"],
-    input[type="password"],
-    input[type="email"] {
+    form input[type="text"],
+    form input[type="password"],
+    form input[type="email"] {
       font-size: 1.2rem; } }
 
 /* 
@@ -163,6 +168,26 @@ input[type="email"] {
     margin-bottom: 1rem; }
   .posts--heading p {
     font-size: 1.5rem; }
+
+.posts--form {
+  margin-bottom: 1rem; }
+  .posts--form form {
+    display: flex;
+    width: 100%;
+    align-items: center; }
+    .posts--form form input[type="text"] {
+      flex-grow: 1;
+      padding: 1rem;
+      border-radius: 5px;
+      background-color: rgba(255, 252, 246, 0.1);
+      border: rgba(51, 51, 51, 0.45) 1px solid;
+      border-top-right-radius: 0;
+      border-bottom-right-radius: 0; }
+    .posts--form form input[type="submit"] {
+      margin-top: 0;
+      border-top-left-radius: 0;
+      border-bottom-left-radius: 0;
+      border-left: none; }
 
 .posts--post {
   border: rgba(51, 51, 51, 0.45) 1px solid;
@@ -433,7 +458,8 @@ input[type="email"] {
         .comments--reply__rereply form input[type="submit"] {
           margin-top: 0; }
         .comments--reply__rereply form textarea {
-          margin-bottom: 1rem; }
+          margin-bottom: 1rem;
+          border-radius: 5px; }
       .comments--reply__rereply--cancel {
         margin-right: auto;
         font-size: 1.2rem;
@@ -589,3 +615,18 @@ input[type="email"] {
 
 .message--message__gr {
   color: #27ae60; }
+
+.error--container {
+  display: flex;
+  flex-direction: column;
+  align-items: center; }
+
+.error--icon {
+  width: 4.8rem;
+  height: 4.8rem;
+  color: #e74c3c; }
+
+.error--message {
+  margin-top: 2rem;
+  font-size: 1.8rem;
+  font-weight: 700; }

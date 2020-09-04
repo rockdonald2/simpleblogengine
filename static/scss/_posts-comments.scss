@@ -16,6 +16,33 @@
         margin-bottom: 1rem;
     }
 
+    &--form {
+        margin-bottom: 1rem;
+
+        form {
+            display: flex;
+            width: 100%;
+            align-items: center;
+
+            input[type="text"] {
+                flex-grow: 1;
+                padding: 1rem;
+                border-radius: 5px;
+                background-color: rgba(#fffcf6, .1);
+                border: $link-color 1px solid;
+                border-top-right-radius: 0;
+                border-bottom-right-radius: 0;
+            }
+
+            input[type="submit"] {
+                margin-top: 0;
+                border-top-left-radius: 0;
+                border-bottom-left-radius: 0;
+                border-left: none;
+            }
+        }
+    }
+
     &--post {
         border: $link-color 1px solid;
         transition: $all-transition;
@@ -434,6 +461,7 @@
 
                 textarea {
                     margin-bottom: 1rem;
+                    border-radius: 5px;
                 }
             }
 

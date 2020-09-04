@@ -24,7 +24,11 @@
     </head>
 
     <body>
+
+
         <main class="container">
+
+        
             {% if message %}
             <section class="message--container">
                 {% if message['category'] == 'gr' %}
@@ -36,7 +40,11 @@
                 {% endif %}
             </section>
             {% endif %}
+
+
             {% block content %} {% endblock %}
+
+
         </main>
     </body>
 

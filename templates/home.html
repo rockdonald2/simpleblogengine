@@ -16,6 +16,8 @@
     {% endif %}
     <h1 class="header--heading">Hi, I'm Lukács Zsolt 😀</h1>
 </header>
+
+
 <section class="description">
     <div>
         <p class="description--text">I'm a student who tries something new every now and then. Maybe, I want to write
@@ -23,7 +25,9 @@
             them, until then checkout my <a href="https://github.com/rockdonald2"
                 target="_blank"
                 rel="noopener noreferrer"
-                class="link">GitHub <span>↗ &nbsp; </span></a> for some
+                class="link">GitHub <span><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122" />
+</svg></span></a> for some
             interesting stuff that I made.</p>
         <p class="description--text">
             I mostly do my schoolwork, but sometimes I do something just for the sake of novelty.
@@ -35,26 +39,40 @@
             <a href="https://github.com/rockdonald2"
                 target="_blank"
                 rel="noopener noreferrer"
-                class="link">💻 GitHub <span>↗</span></a>
+                class="link">💻 GitHub <span><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122" />
+</svg</span></a>
         </li>
         <li class="description--links__link">
             <a href="https://rockdonald2.github.io/Resume/"
                 target="_blank"
                 rel="noopener noreferrer"
-                class="link">📃 Resumé <span>↗</span></a>
+                class="link">📃 Resumé <span><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122" />
+</svg</span></a>
         </li>
         <li class="description--links__link">
             <a href="mailto:rockdonald2@gmail.com"
                 target="_blank"
                 rel="noopener noreferrer"
-                class="link">👋🏻 Contact me via e-mail <span>↗</span></a>
+                class="link">👋🏻 Contact me via e-mail <span><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122" />
+</svg</span></a>
         </li>
     </ul>
 </section>
+
+
 <section class="posts">
     <div class="posts--heading">
         <h2>What I'm writing about</h2>
         <p>You might want to check out some of the things I wrote recently:</p>
+    </div>
+    <div class="posts--form">
+        <form action="/search" method="POST">
+            <input type="text" name="words" id="words" placeholder="Type in keywords or a post title, empty search for reset">
+            <input type="submit" value="Search">
+        </form>
     </div>
     <div class="posts--container">
         {% if posts %}
@@ -73,8 +91,10 @@
         </a>
         {% endfor %}
         {% else %}
-        <p class="posts--empty">There are no posts yet...</p>
+        <p class="posts--empty">There are no posts...</p>
         {% endif %}
     </div>
 </section>
+
+
 {% endblock %}

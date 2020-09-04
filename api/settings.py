@@ -57,14 +57,3 @@ DOMAIN = {
 # * Disabling PAGINATION results in getting all the information in one request
 HATEOAS = False
 PAGINATION = False
-
-""" 'comments': {
-        'schema': {
-            'author': {'type': 'string', 'required': True},
-            'text': {'type': 'string', 'minlength': 5, 'required': True},
-            'date': {'type': 'string', 'required': True},
-            'post_id': {'type': 'objectid', 'required': True},
-            'vote': {'type': 'integer', 'required': True, 'default': 0},
-            'voted': {'type': 'dict', 'required': True, 'default': {'upvote': [], 'downvote': []}}
-        }
-    }, """
