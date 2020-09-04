@@ -134,7 +134,7 @@ body {
     margin-right: .5rem; }
 
 form input[type="submit"] {
-  padding: 1rem;
+  padding: .65rem 1rem;
   font-size: 1.5rem;
   background-color: rgba(255, 252, 246, 0.1);
   border: rgba(51, 51, 51, 0.45) 1px solid;
@@ -142,9 +142,12 @@ form input[type="submit"] {
   cursor: pointer;
   transition: all 0.25s ease;
   margin-top: 1.5rem; }
-  form input[type="submit"]:hover {
+  form input[type="submit"]:hover, form input[type="submit"]:focus {
     background-color: rgba(51, 51, 51, 0.45);
     color: #fafafa; }
+  @media only screen and (max-width: 600px) {
+    form input[type="submit"] {
+      font-size: 1.2rem; } }
 
 form textarea,
 form input[type="text"],
@@ -177,12 +180,16 @@ form input[type="email"] {
     align-items: center; }
     .posts--form form input[type="text"] {
       flex-grow: 1;
-      padding: 1rem;
+      padding: .65rem 1rem;
       border-radius: 5px;
       background-color: rgba(255, 252, 246, 0.1);
       border: rgba(51, 51, 51, 0.45) 1px solid;
       border-top-right-radius: 0;
-      border-bottom-right-radius: 0; }
+      border-bottom-right-radius: 0;
+      font-size: 1.5rem; }
+      @media only screen and (max-width: 600px) {
+        .posts--form form input[type="text"] {
+          font-size: 1.2rem; } }
     .posts--form form input[type="submit"] {
       margin-top: 0;
       border-top-left-radius: 0;
@@ -294,7 +301,12 @@ form input[type="email"] {
       display: flex;
       align-items: center;
       padding: .25rem .5rem;
-      transition: all 0.25s ease; }
+      border-radius: 5px;
+      border: 1px solid rgba(51, 51, 51, 0.45);
+      transition: all 0.25s ease;
+      background-color: rgba(51, 51, 51, 0.05); }
+      .comments--comment__btn:hover, .comments--comment__btn:focus {
+        background-color: rgba(51, 51, 51, 0.15); }
       .comments--comment__btn svg {
         width: 1.6rem;
         height: 1.6rem;
@@ -358,7 +370,8 @@ form input[type="email"] {
       color: rgba(51, 51, 51, 0.45);
       border-bottom: 1px solid rgba(51, 51, 51, 0.45);
       padding: 0 1rem .5rem 1rem;
-      margin-right: 10%;
+      margin-left: 1rem;
+      margin-right: auto;
       cursor: pointer;
       transition: all 0.25s ease; }
       .comments--comment__reply--cancel:hover {
@@ -403,7 +416,13 @@ form input[type="email"] {
       align-items: center;
       padding: .25rem .5rem;
       font-size: 1.2rem;
-      cursor: pointer; }
+      cursor: pointer;
+      border-radius: 5px;
+      border: 1px solid rgba(51, 51, 51, 0.45);
+      transition: all 0.25s ease;
+      background-color: rgba(51, 51, 51, 0.05); }
+      .comments--reply__btn:hover, .comments--reply__btn:focus {
+        background-color: rgba(51, 51, 51, 0.15); }
       .comments--reply__btn svg {
         width: 1.2rem;
         height: 1.2rem;
@@ -416,9 +435,10 @@ form input[type="email"] {
         border-radius: unset;
         border-bottom: rgba(51, 51, 51, 0.45) 1px solid;
         transition: all 0.25s ease; }
-        .comments--reply__btn--reply:hover {
+        .comments--reply__btn--reply:hover, .comments--reply__btn--reply:focus {
           color: rgba(51, 51, 51, 0.85);
-          border-bottom-color: rgba(51, 51, 51, 0.85); }
+          border-bottom-color: rgba(51, 51, 51, 0.85);
+          background-color: unset; }
       .comments--reply__btn--delete {
         margin-left: auto;
         margin-bottom: 1rem;
@@ -456,10 +476,12 @@ form input[type="email"] {
         align-items: center;
         justify-content: flex-end; }
         .comments--reply__rereply form input[type="submit"] {
-          margin-top: 0; }
+          margin-top: 0;
+          font-size: 1.2rem; }
         .comments--reply__rereply form textarea {
           margin-bottom: 1rem;
-          border-radius: 5px; }
+          border-radius: 5px;
+          border: 1px solid rgba(51, 51, 51, 0.45); }
       .comments--reply__rereply--cancel {
         margin-right: auto;
         font-size: 1.2rem;

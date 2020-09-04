@@ -26,12 +26,17 @@
 
             input[type="text"] {
                 flex-grow: 1;
-                padding: 1rem;
+                padding: .65rem 1rem;
                 border-radius: 5px;
                 background-color: rgba(#fffcf6, .1);
                 border: $link-color 1px solid;
                 border-top-right-radius: 0;
                 border-bottom-right-radius: 0;
+                font-size: $medium-font;
+
+                @include responsive(600px) {
+                    font-size: $small-font;
+                }
             }
 
             input[type="submit"] {
@@ -204,7 +209,15 @@
             display: flex;
             align-items: center;
             padding: .25rem .5rem;
+            border-radius: 5px;
+            border: 1px solid $link-color;
             transition: $all-transition;
+            background-color: rgba($link-color, .05);
+
+            &:hover,
+            &:focus {
+                background-color: rgba($link-color, .15);
+            }
 
             svg {
                 width: 1.6rem;
@@ -305,7 +318,8 @@
                 color: $link-color;
                 border-bottom: 1px solid $link-color;
                 padding: 0 1rem .5rem 1rem;
-                margin-right: 10%;
+                margin-left: 1rem;
+                margin-right: auto;
                 cursor: pointer;
                 transition: $all-transition;
 
@@ -374,6 +388,15 @@
             padding: .25rem .5rem;
             font-size: $small-font;
             cursor: pointer;
+            border-radius: 5px;
+            border: 1px solid $link-color;
+            transition: $all-transition;
+            background-color: rgba($link-color, .05);
+
+            &:hover,
+            &:focus {
+                background-color: rgba($link-color, .15);
+            }
 
             svg {
                 width: 1.2rem;
@@ -390,9 +413,11 @@
                 border-bottom: $link-color 1px solid;
                 transition: $all-transition;
 
-                &:hover {
+                &:hover,
+                &:focus {
                     color: $font-color;
                     border-bottom-color: $font-color;
+                    background-color: unset;
                 }
             }
 
@@ -457,11 +482,13 @@
 
                 input[type="submit"] {
                     margin-top: 0;
+                    font-size: $small-font;
                 }
 
                 textarea {
                     margin-bottom: 1rem;
                     border-radius: 5px;
+                    border: 1px solid $link-color;
                 }
             }
 

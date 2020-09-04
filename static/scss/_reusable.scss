@@ -36,7 +36,7 @@
 }
 
 form input[type="submit"] {
-    padding: 1rem;
+    padding: .65rem 1rem; 
     font-size: $medium-font;
     background-color: rgba(#fffcf6, .1);
     border: $link-color 1px solid;
@@ -45,9 +45,14 @@ form input[type="submit"] {
     transition: $all-transition;
     margin-top: 1.5rem;
 
-    &:hover {
+    &:hover,
+    &:focus {
         background-color: $link-color;
         color: $bg-color;
+    }
+
+    @include responsive(600px) {
+        font-size: $small-font;
     }
 }
 
