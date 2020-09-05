@@ -69,32 +69,13 @@
         <p>You might want to check out some of the things I wrote recently:</p>
     </div>
     <div class="posts--form">
-        <form action="/search" method="POST">
-            <input type="text" name="words" id="words" placeholder="Type in keywords or a post title, empty search for reset">
-            <input type="submit" value="Search">
-        </form>
+        <input type="text" name="words" id="words" placeholder="Type in keywords or a post title">
+        <button type="button" disabled>Search</button>
     </div>
-    <div class="posts--container">
-        {% if posts %}
-        {% for p in posts %}
-        <a href="post/{{ p['_id'] }}"
-            rel="noopener noreferrer"
-            class="posts--post">
-            <div class="posts--post__top">
-                <span class="posts--post__top--title">{{ p['title'] }}</span><span>Read more<span><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
-</svg></span>
-            </div>
-            <div class="posts--post__bottom">
-                <span>{{ p['author'] }} | {{ p['date'] }}</span>
-            </div>
-        </a>
-        {% endfor %}
-        {% else %}
-        <p class="posts--empty">There are no posts...</p>
-        {% endif %}
-    </div>
+    <div class="posts--container"></div>
+    <div class="posts--pagination"></div>
 </section>
 
+<script src="../static/js/homepage.js" defer></script>
 
 {% endblock %}

@@ -18,32 +18,44 @@
 
     &--form {
         margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
 
-        form {
-            display: flex;
-            width: 100%;
-            align-items: center;
+        input[type="text"] {
+            flex-grow: 1;
+            padding: .65rem 1rem;
+            border-radius: 5px;
+            background-color: $input-background;
+            border: $link-color 1px solid;
+            font-size: $medium-font;
+            border-top-right-radius: 0;
+            border-bottom-right-radius: 0;
+            border-right: none;
 
-            input[type="text"] {
-                flex-grow: 1;
-                padding: .65rem 1rem;
-                border-radius: 5px;
-                background-color: rgba(#fffcf6, .1);
-                border: $link-color 1px solid;
-                border-top-right-radius: 0;
-                border-bottom-right-radius: 0;
-                font-size: $medium-font;
+            @include responsive(600px) {
+                font-size: $small-font;
+            }
+        }
+        
+        button {
+            border: $link-color 1px solid;
+            border-radius: 5px;
+            padding: .65rem 1rem;
+            border-top-left-radius: 0;
+            border-bottom-left-radius: 0;
+            font-size: $medium-font;
+            background-color: $select-color;
+            color: $bg-color;
+            transition: $all-transition;
 
-                @include responsive(600px) {
-                    font-size: $small-font;
-                }
+            &:hover,
+            &:focus {
+                background-color: $bg-color;
+                color: $select-color;
             }
 
-            input[type="submit"] {
-                margin-top: 0;
-                border-top-left-radius: 0;
-                border-bottom-left-radius: 0;
-                border-left: none;
+            @include responsive(600px) {
+                font-size: $small-font;
             }
         }
     }
@@ -58,6 +70,10 @@
         font-size: $small-font;
         border-radius: 5px;
 
+        &.hide {
+            display: none;
+        }
+
         &__top {
             display: flex;
             align-items: flex-start;
@@ -66,17 +82,20 @@
             &--title {
                 font-weight: 700;
                 max-width: 65%;
+
+                &__hl {
+                    background-color: $select-color;
+                    color: $bg-color;
+                }
             }
 
             span {
                 span {
-                    display: inline-block;
-                    transition: $all-transition;
-
                     svg {
                         margin-left: .5rem;
                         width: 10px;
                         height: 10px;
+                        transition: $all-transition;
                     }
                 }
             }
@@ -89,12 +108,15 @@
 
         &:hover,
         &:focus {
-            border: $font-color 1px solid;
+            border: $select-color 1px solid;
 
             .posts--post__top {
                 span {
                     span {
-                        transform: translateX(.25rem);
+                        svg {
+                            transform: translateX(.25rem);
+                            color: $select-color;
+                        }
                     }
                 }
             }
@@ -108,6 +130,42 @@
     &--empty {
         font-size: $medium-font;
         color: $link-color;
+    }
+
+    &--pagination {
+        margin-top: 2.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        &.hide {
+            display: none;
+        }
+
+        button {
+            font-size: $medium-font;
+            border: none;
+            border-bottom: $link-color 1px solid;
+            background-color: transparent;
+            padding: .25rem .5rem;
+            cursor: pointer;
+            transition: $all-transition;
+
+            &.hide {
+                display: none;
+            }
+
+            &:not(:first-of-type) {
+                margin-left: .75rem;
+            }
+
+            &.active,
+            &:hover,
+            &:focus {
+                color: $select-color;
+                border-bottom-color: $select-color;
+            }
+        }
     }
 }
 
@@ -140,6 +198,8 @@
         }
 
         input[type="submit"] {
+            margin-top: 1.5rem;
+
             @include responsive(525px) {
                 width: 100%;
                 text-align: center;
@@ -167,7 +227,7 @@
         }
 
         &__top {
-            align-items: flex-start;
+            align-items: center;
         }
 
         &__bottom {
@@ -177,7 +237,6 @@
 
         &__author {
             font-weight: 700;
-            margin-bottom: 1rem;
             font-size: $medium-font;
             max-width: 75%;
         }
@@ -481,7 +540,6 @@
                 justify-content: flex-end;
 
                 input[type="submit"] {
-                    margin-top: 0;
                     font-size: $small-font;
                 }
 

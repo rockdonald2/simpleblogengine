@@ -79,7 +79,8 @@
                 </svg>
                 <span class="comments--comment__btn--text">Upvote</span></button>
             {% endif %}
-            <p class="comments--comment__votect">{{ '{0:{1}}'.format(comment.data['vote'], '+' if comment.data['vote'] else '') }}
+            <p class="comments--comment__votect" data-vote="{{ comment.data['vote'] }}">
+            {{ '+' if comment.data['vote'] > 0 else '' }}{{ human_format(comment.data['vote']) }}
             </p>
             {% if 'auth' in session %}
             <button class="comments--comment__btn comments--comment__btn--down
@@ -145,8 +146,8 @@
                             clip-rule="evenodd" />
                     </svg></button>
                 {% endif %}
-                <p class="comments--reply__votect">{{ '{0:{1}}'.format(subcomment.data['vote'], '+' if subcomment.data['vote'] else
-                    '') }}</p>
+                <p class="comments--reply__votect" data-vote="{{ subcomment.data['vote'] }}">
+                {{ '+' if subcomment.data['vote'] > 0 else '' }}{{ human_format(subcomment.data['vote']) }}</p>
                 {% if 'auth' in session %}
                 <button class="comments--reply__btn comments--reply__btn--down
                 {{ 'active' if session['auth'][0] in subcomment.data['voted']['downvote'] }}
@@ -166,7 +167,7 @@
                     method="POST">
                     <textarea name="rcm"
                         id="rcm"
-                        Placeholder="What are your thoughts?"
+                        placeholder="What are your thoughts?"
                         minlength=5
                         required></textarea>
                     <button type="button"

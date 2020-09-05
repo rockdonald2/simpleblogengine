@@ -1,4 +1,4 @@
-from flask import Flask, request, url_for, redirect, session, abort
+from flask import Flask, request, url_for, redirect, session, abort, jsonify
 from flask_caching import Cache
 from jinja2 import Environment, FileSystemLoader, select_autoescape, Markup
 import requests
@@ -37,6 +37,7 @@ app.config['CACHE_TYPE'] = 'simple'
 app.config['CACHE_DEFAULT_TIMEOUT'] = 300
 cache = Cache(app)
 # * Cache is only cleared when there's a new comment/deleted comment/deleted post
+# * Cache only works for unlogged users
 
 # * The API can be reached with this endpoint
 API_URL = 'http://127.0.0.1:5000/api/'
@@ -81,19 +82,42 @@ def error_handler(e):
 # * cache each opened post for 2 minutes
 # * cache only works for unlogged users, for logged in users the caching mechanism is bypassed
 def check_login():
+    """ 
+    Checks whether the user is logged in or not.
+    Returns True, otherwise False.
+    """
     return 'auth' in session
 
 # * Cache current posts for 2 minutes
 # * This also results in new posts not appearing for 2 minutes after publishing
 @cache.cached(timeout=120, key_prefix='all_posts', unless=check_login)
 def get_all_posts():
-    posts = requests.get(API_URL + 'posts?projection={"text": 0}').json()['_items']
+    posts = requests.get(API_URL + 'posts?projection={"title": 1, "date": 1, "author": 1}&sort=[("date", -1)]').json()['_items']
     return posts
+
+
+@app.route('/posts', methods=['GET'])
+def posts():
+    """
+    An endpoint to fetch current posts for homepage type-ahead effect.
+    """
+
+    # * We need to filter out additional fields added to each response: _updated, _created, _etag.
+    # ! We do not want to expose these fields to end users.
+
+    all_posts = get_all_posts()
+    restricted = ['_updated', '_created', '_etag']
+
+    for p in all_posts[:]:
+        for field in list(p):
+            if field in restricted:
+                del(p[field])
+
+    return jsonify(all_posts)
 
 
 @app.route('/', methods=['GET'])
 @app.route('/home', methods=['GET'])
-@app.route('/search', methods=['GET', 'POST'])
 def home():
     """
     Index route, where the page loads,
@@ -101,36 +125,9 @@ def home():
     The posts are cached for 2 minutes after loading, for users that aren't logged in.
     """
 
-    posts = None
-
-    # * this form only appears if we access the route via search
-    form = request.form
-    if form:
-        keywords = [Markup(word).striptags() for word in form['words'].split(' ') if len(word) >= 3]
-        posts = get_all_posts()
-        filtered_posts = []
-
-        for p in posts:
-            flag = True
-            for k in keywords:
-                if p['title'].find(k) == -1:
-                    flag = False
-
-                if not flag:
-                    break
-
-            if flag:
-                filtered_posts.append(p)
-
-        posts = filtered_posts
-    else:
-        posts = get_all_posts()
-
-    posts.sort(key=lambda p: p['date'], reverse=True)
-
     home_template = env.get_template('home.html')
     message = eval(request.args.get('message')) if request.args.get('message') else None 
-    return home_template.render(title='A Simple Blog Engine', posts=posts, session=session, message=message)
+    return home_template.render(title='A Simple Blog Engine', session=session, message=message)
     
 
 @app.route('/login', methods=['POST', 'GET'])
@@ -145,7 +142,7 @@ def login():
 
     login_template = env.get_template('login.html')
 
-    if 'auth' in session:
+    if check_login():
         return redirect(url_for('home', message={'category': 'gr', 'msg': 'You\'re already logged in!'}))
     elif request.method == 'GET':
         return login_template.render(title='Log into your account')
@@ -180,7 +177,7 @@ def register():
 
     register_template = env.get_template('register.html')
 
-    if 'auth' in session:
+    if check_login():
         return redirect(url_for('home', message={'category': 'gr', 'msg': 'Sign out first before registering a new account'}))
     elif request.method == 'GET':
         return register_template.render(title='Register your new account')
@@ -219,6 +216,19 @@ def logout():
     return redirect(url_for('home', message={'category': 'gr', 'msg': 'You\'ve successfully logged out!'}))
 
 
+def human_format(num):
+    """
+    A function that converts a number into a humanly readable format.
+    """
+
+    num = float('{:.3g}'.format(num))
+    magnitude = 0
+    while abs(num) >= 1000:
+        magnitude += 1
+        num /= 1000.0
+    return '{}{}'.format('{:f}'.format(num).rstrip('0').rstrip('.'), ['', 'K', 'M', 'B', 'T'][magnitude])
+
+
 @app.route('/post/<id>', methods=['GET'])
 @cache.cached(timeout=120, unless=check_login)
 def post(id):
@@ -228,6 +238,7 @@ def post(id):
     """
 
     post_template = env.get_template('post.html')
+    post_template.globals['human_format'] = human_format
     p = requests.get(API_URL + 'posts/' + id)
 
     if p.status_code == 404:
@@ -236,7 +247,6 @@ def post(id):
         p = p.json()
 
     comments = requests.get(API_URL + 'comments?where={"post_id":"' + id + '"}').json()['_items']
-
     comments.sort(reverse=True, key=lambda c: c['data']['vote'])
 
     return post_template.render(title=p['title'], post=p, session=session, id=id, comments=comments)
@@ -249,7 +259,7 @@ def comment(id):
     After the post refreshes the post uncached with new comments.
     """
 
-    if 'auth' in session:
+    if check_login():
         if request.method == 'POST':
             form = request.form
 
@@ -332,7 +342,7 @@ def comment_delete(id):
     cid = id[:24]
     sid = id[24:] or None
 
-    if 'auth' in session:
+    if check_login():
         cm = requests.get(API_URL + 'comments/' + cid).json()
         postAuthor = requests.get(API_URL + 'posts/' + cm['post_id']).json()['author']
 
@@ -420,7 +430,7 @@ def comment_upvote(id):
     cid = id[:24]
     sid = id[24:] or None
 
-    if 'auth' in session:
+    if check_login():
         cm = requests.get(API_URL + 'comments/' + cid).json()
         headers = {
             "If-Match": cm['_etag'],
@@ -464,6 +474,13 @@ def comment_upvote(id):
 
             returnCode = '200'
 
+        # * if the upvoted entity is a reply, then sort that level
+        if not relevantComment.is_root:
+            relevantParent = relevantComment.parent
+            relevantChildren = list(relevantParent.children)
+            relevantChildren.sort(reverse=True, key=lambda c: c.data['vote'])
+            relevantParent.children = tuple(relevantChildren)
+
         resp = requests.patch(API_URL + 'comments/' + cid, exporter.export(parentComment), headers=headers)
 
         if resp.status_code != 200:
@@ -484,7 +501,7 @@ def comment_downvote(id):
     cid = id[:24]
     sid = id[24:] or None
 
-    if 'auth' in session:
+    if check_login():
         cm = requests.get(API_URL + 'comments/' + cid).json()
         headers = {
             "If-Match": cm['_etag'],
@@ -528,6 +545,13 @@ def comment_downvote(id):
 
             returnCode = '200'
 
+        # * if the upvoted entity is a reply, then sort that level
+        if not relevantComment.is_root:
+            relevantParent = relevantComment.parent
+            relevantChildren = list(relevantParent.children)
+            relevantChildren.sort(reverse=True, key=lambda c: c.data['vote'])
+            relevantParent.children = tuple(relevantChildren)
+
         resp = requests.patch(API_URL + 'comments/' + cid, exporter.export(parentComment), headers=headers)
 
         if resp.status_code != 200:
@@ -548,7 +572,7 @@ def reply_comment(id):
     cid = id[:24]
     sid = id[24:] or None
 
-    if 'auth' in session:
+    if check_login():
         cm = requests.get(API_URL + 'comments/' + cid).json()
 
         if request.method == 'POST':
@@ -603,7 +627,7 @@ def write():
     If a not logged in user tries to request this page, the user is automatically redirected to the home page with a message.
     """
 
-    if 'auth' in session:
+    if check_login():
         if request.method == 'POST':
             form = request.form
             if form['post'] != '':
@@ -640,7 +664,7 @@ def edit(id):
     post_url = API_URL + 'posts/' + id
     post = requests.get(post_url).json()
 
-    if 'auth' in session and session['auth'][1] == post['author']:
+    if check_login() and session['auth'][1] == post['author']:
         if request.method == 'GET':
             edit_template = env.get_template('edit.html')
             return edit_template.render(title='Edit your post', post=post, id=id)
@@ -664,7 +688,7 @@ def edit(id):
                 return redirect(url_for('home', message={'category': 'gr', 'msg': 'You\'ve successfully edited your posted'}))
             else:
                 return redirect(url_for('home', message={'category': '', 'msg': 'Your post was empty, it isn\'t published'}))
-    elif 'auth' in session:
+    elif check_login():
         return redirect(url_for('home', message={'category': 'err', 'msg': 'You\'re not the original author of this post'}))
     else:
         return redirect(url_for('home', message={'category': 'err', 'msg': 'You\'re not logged in'}))
@@ -679,7 +703,7 @@ def delete(id):
     redirected to the home page with an appropriate message.
     """
 
-    if 'auth' in session:
+    if check_login():
         post_url = API_URL + 'posts/' + id
         post = requests.get(post_url).json()
         headers = {
