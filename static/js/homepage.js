@@ -1,6 +1,6 @@
 /* 
- * Empty container to fetch posts in
- */
+* Empty container to fetch posts in
+*/
 const posts = [];
 // * Important variables for pagination
 let page = 1;
@@ -15,7 +15,8 @@ const httpRequest = new XMLHttpRequest;
 httpRequest.onreadystatechange = function () {
     if (this.readyState == 4 && this.status == 200) {
         posts.push(...JSON.parse(this.response));
-        makePaginationBar(Math.ceil(posts.length / limit));
+        currentTotalPageNumber = Math.ceil(posts.length / limit);
+        makePaginationBar(currentTotalPageNumber);
         populateList(posts);
     } else if (this.readyState == 4) {
         window.location.replace(this.responseURL);
@@ -93,10 +94,9 @@ function populateList(posts, keywords = '') {
         postCounter++;
     }
 
-    currentTotalPageNumber = pageCounter - 1;
-
+    currentTotalPageNumber = Math.ceil(posts.length / limit);
     /* we only need the bar if there are any posts */
-    updatePaginationBar(pageCounter);
+    updatePaginationBar(currentTotalPageNumber);
     showPage(event = null, pageNumber = 1);
 }
 
