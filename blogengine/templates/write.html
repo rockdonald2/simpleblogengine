@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% from "_formhelpers.html" import render_field %}
 
 {% block content %}
 <header class="header">
@@ -6,9 +7,9 @@
         class="link header--link"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
 </svg>Home</a>
-    <h1 class="header--heading">{{ title }} </h1>
+    <h1 class="header--heading">{{ title }}</h1>
 </header>
-<section class="edit">
+<section class="write">
     <div class="tab">
         <button class="tab--link tab--link__focused"
             id="edit_your_post">Edit your post</button>
@@ -16,38 +17,22 @@
             id="prev_your_post">Preview your post</button>
     </div>
     <div class="tab--content tab--edit">
-        <form method="POST">
-            <label for="title">
-                What is the title of your post?
-            </label>
-            <input type="text"
-                name="title"
-                id="title"
-                placeholder='Be short.'
-                value="{{ post.title }}"
-                minlength=5
-                maxlength=90
-                required>
-            <label for="post">
-                You should write your post in Markdown or plain text.
-            </label>
-            <textarea name="post"
-                id="post"
-                wrap="on"
-                placeholder="Remember, be nice!"
-                minlength=15
-                required>{{ post.text }}</textarea>
+        <form action='/write'
+            method="POST"
+            novalidate>
+
+            {{ form.hidden_tag() }}
+
+            {{ render_field(form.title, placeholder="Be short") }}
+            {{ render_field(form.post, placeholder="Remember, be nice!") }}
+
             <input type="submit"
-                value="Publish your post"
-                formaction="/edit/{{ id }}">
-            <input type="submit"
-                value="Delete this post"
-                formaction="/delete/{{ id }}"></input>
+                value="Publish your post">
         </form>
     </div>
     <div class="tab--content tab--prev tab--hide">
-        <h2 class="edit--preview__header">Preview of your post, rendered</h2>
-        <div class="edit--preview markdown-body"></div>
+        <h2 class="write--preview__header">Preview of your post, rendered</h2>
+        <div class="write--preview markdown-body"></div>
     </div>
 </section>
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"

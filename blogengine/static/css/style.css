@@ -254,18 +254,19 @@ form input[type="email"] {
   .posts--pagination button {
     font-size: 1.5rem;
     border: none;
-    border-bottom: rgba(51, 51, 51, 0.45) 1px solid;
+    border: rgba(51, 51, 51, 0.45) 2px solid;
     background-color: transparent;
-    padding: .25rem .5rem;
+    padding: .5rem .75rem;
     cursor: pointer;
-    transition: all 0.25s ease; }
+    transition: all 0.25s ease;
+    border-radius: 5px; }
     .posts--pagination button.hide {
       display: none; }
     .posts--pagination button:not(:first-of-type) {
       margin-left: .75rem; }
     .posts--pagination button.active, .posts--pagination button:hover, .posts--pagination button:focus {
       color: #3498db;
-      border-bottom-color: #3498db; }
+      border-color: #3498db; }
 
 .comments {
   margin-top: 2.5rem;
@@ -398,6 +399,9 @@ form input[type="email"] {
         border-right: none; }
       .comments--comment__reply form input[type="submit"] {
         margin: .5rem 1rem; }
+      .comments--comment__reply form .form--error {
+        margin-left: 1rem;
+        margin-bottom: 1rem; }
     .comments--comment__reply--cancel {
       font-size: 1.2rem;
       background: none;
@@ -516,6 +520,10 @@ form input[type="email"] {
           margin-bottom: 1rem;
           border-radius: 5px;
           border: 1px solid rgba(51, 51, 51, 0.45); }
+        .comments--reply__rereply form .form--error {
+          margin-left: 1rem;
+          margin-bottom: 1rem;
+          margin-top: 0; }
       .comments--reply__rereply--cancel {
         margin-right: auto;
         font-size: 1.2rem;
@@ -541,6 +549,9 @@ form input[type="email"] {
   .edit form label {
     font-size: 1.5rem;
     margin-bottom: 1rem; }
+    .write form label[for="post"],
+    .edit form label[for="post"] {
+      margin-top: 1rem; }
   .write form textarea,
   .write form input[type="text"],
   .edit form textarea,
@@ -551,8 +562,7 @@ form input[type="email"] {
     overflow: auto; }
   .write form input[type="text"],
   .edit form input[type="text"] {
-    padding: .5rem 1rem;
-    margin-bottom: 1rem; }
+    padding: .5rem 1rem; }
   .write form textarea,
   .edit form textarea {
     height: 30rem;
@@ -564,11 +574,11 @@ form input[type="email"] {
   .write form input[type="submit"],
   .edit form input[type="submit"] {
     margin-top: 1.5rem; }
-  .write form input[type="submit"]:nth-of-type(3),
-  .edit form input[type="submit"]:nth-of-type(3) {
+  .write form input[type="submit"]:nth-of-type(4),
+  .edit form input[type="submit"]:nth-of-type(4) {
     background-color: rgba(231, 76, 60, 0.25); }
-    .write form input[type="submit"]:nth-of-type(3):hover,
-    .edit form input[type="submit"]:nth-of-type(3):hover {
+    .write form input[type="submit"]:nth-of-type(4):hover,
+    .edit form input[type="submit"]:nth-of-type(4):hover {
       background-color: rgba(231, 76, 60, 0.75); }
 
 .write--preview,
@@ -647,8 +657,8 @@ form input[type="email"] {
   .register form a {
     margin-top: 1.5rem;
     font-size: 1.2rem; }
-  .login form input[type="password"] + label[for="pwd"],
-  .register form input[type="password"] + label[for="pwd"] {
+  .login form label[for="pwd"],
+  .register form label[for="pwd"] {
     margin-top: .5rem;
     width: 100%;
     text-align: left;
@@ -672,7 +682,7 @@ form input[type="email"] {
 .message--message__err {
   color: #e74c3c; }
 
-.message--message__gr {
+.message--message__succ {
   color: #27ae60; }
 
 .error--container {
@@ -689,3 +699,15 @@ form input[type="email"] {
   margin-top: 2rem;
   font-size: 1.8rem;
   font-weight: 700; }
+
+.form--error {
+  display: flex;
+  align-items: center;
+  color: #e74c3c;
+  margin-top: 1rem;
+  font-size: 1.2rem;
+  width: 100%; }
+  .form--error svg {
+    width: 1.8rem;
+    height: 1.8rem;
+    margin-right: 1rem; }

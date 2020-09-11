@@ -7,7 +7,7 @@
     "doc": "docs"
   },
   "scripts": {
-    "watch:sass": "node-sass static/scss/main.scss static/css/style.css -w"
+    "watch:sass": "node-sass blogengine/static/scss/main.scss blogengine/static/css/style.css -w"
   },
   "author": "Lukács Zsolt",
   "license": "UNLICENSED",

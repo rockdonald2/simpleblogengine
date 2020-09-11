@@ -17,3 +17,18 @@
         font-weight: 700;
     }
 }
+
+.form--error {
+    display: flex;
+    align-items: center;
+    color: $error-color;
+    margin-top: 1rem;
+    font-size: 1.2rem;
+    width: 100%;
+
+    svg {
+        width: 1.8rem;
+        height: 1.8rem;
+        margin-right: 1rem;
+    }
+}

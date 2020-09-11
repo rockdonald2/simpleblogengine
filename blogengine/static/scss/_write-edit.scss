@@ -11,6 +11,10 @@
         label {
             font-size: $medium-font;
             margin-bottom: 1rem;
+
+            &[for="post"] {
+                margin-top: 1rem;
+            }
         }
 
         textarea,
@@ -23,7 +27,6 @@
 
         input[type="text"] {
             padding: .5rem 1rem;
-            margin-bottom: 1rem;
         }
 
         textarea {
@@ -39,7 +42,7 @@
             margin-top: 1.5rem;
         }
 
-        input[type="submit"]:nth-of-type(3) {
+        input[type="submit"]:nth-of-type(4) {
             background-color: rgba($error-color, .25);
 
             &:hover {

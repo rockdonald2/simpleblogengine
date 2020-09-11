@@ -28,18 +28,15 @@
 
         <main class="container">
 
-        
-            {% if message %}
-            <section class="message--container">
-                {% if message['category'] == 'gr' %}
-                <p class="message--message message--message__gr">{{ message['msg'] }}</p>
-                {% elif message['category'] == 'err' %}
-                <p class="message--message message--message__err">{{ message['msg'] }}</p>
-                {% else %}
-                <p class="message--message">{{ message['msg'] }}</p>
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    <section class="message--container">
+                        {% for category, message in messages %}
+                        <p class="message--message message--message__{{ category }}">{{ message }}</p>
+                        {% endfor %}
+                    </section>
                 {% endif %}
-            </section>
-            {% endif %}
+            {% endwith %}
 
 
             {% block content %} {% endblock %}

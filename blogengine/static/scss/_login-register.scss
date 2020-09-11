@@ -39,7 +39,7 @@
             font-size: $small-font;
         }
 
-        input[type="password"]+label[for="pwd"] {
+        label[for="pwd"] {
             margin-top: .5rem;
             width: 100%;
             text-align: left;

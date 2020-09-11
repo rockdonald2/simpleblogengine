@@ -36,7 +36,7 @@
                 font-size: $small-font;
             }
         }
-        
+
         button {
             border: $link-color 1px solid;
             border-radius: 5px;
@@ -145,11 +145,12 @@
         button {
             font-size: $medium-font;
             border: none;
-            border-bottom: $link-color 1px solid;
+            border: $link-color 2px solid;
             background-color: transparent;
-            padding: .25rem .5rem;
+            padding: .5rem .75rem;
             cursor: pointer;
             transition: $all-transition;
+            border-radius: 5px;
 
             &.hide {
                 display: none;
@@ -163,7 +164,7 @@
             &:hover,
             &:focus {
                 color: $select-color;
-                border-bottom-color: $select-color;
+                border-color: $select-color;
             }
         }
     }
@@ -368,6 +369,11 @@
                 input[type="submit"] {
                     margin: .5rem 1rem;
                 }
+
+                .form--error {
+                    margin-left: 1rem;
+                    margin-bottom: 1rem;
+                }
             }
 
             &--cancel {
@@ -403,7 +409,7 @@
         resize: none;
     }
 
-    &--comment > .comments--reply {
+    &--comment>.comments--reply {
         padding-right: 1.5rem;
         padding-bottom: 1.5rem;
         border-top: $link-color 1px solid;
@@ -416,7 +422,7 @@
             padding: 1rem 0 0 .75rem;
         }
 
-        & > div.comments--reply {
+        &>div.comments--reply {
             padding-left: 2.5rem;
 
             @include responsive(475px) {
@@ -547,6 +553,12 @@
                     margin-bottom: 1rem;
                     border-radius: 5px;
                     border: 1px solid $link-color;
+                }
+
+                .form--error {
+                    margin-left: 1rem;
+                    margin-bottom: 1rem;
+                    margin-top: 0;
                 }
             }
 

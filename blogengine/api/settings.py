@@ -1,11 +1,17 @@
+from json import load
 
-# * the mongoDB connection details
-MONGO_HOST = 'localhost'
-MONGO_PORT = 27017
+with open('config.json', 'r') as config_file:
+    config_json = load(config_file)
+    
+# * MongoDB connection details
+MONGO_HOST =  config_json['MONGO_HOST']
+MONGO_PORT = config_json['MONGO_PORT']
+MONGO_DBNAME = config_json['MONGO_DBNAME']
+MONGO_USERNAME = config_json['MONGO_USERNAME']
+MONGO_PASSWORD = config_json['MONGO_PASSWORD']
 
 # * we specify which route refers to the api, and which mongoDB collection we expose with our api
 URL_PREFIX = 'api'
-MONGO_DBNAME = 'blog'
 
 # * we limit which methods can be used on collections/documents
 RESOURCE_METHODS = ['GET', 'POST']

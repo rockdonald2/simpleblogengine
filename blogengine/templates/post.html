@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% from "_formhelpers.html" import render_field %}
 
 {% block content %}
 
@@ -27,13 +28,12 @@
     {% if session['auth'] %}
     <form action="/comment&{{ id }}"
         method="POST"
-        class="comments--add">
-        <label for="cm">Feel free to comment on this post</label>
-        <textarea name="cm"
-            id="cm"
-            placeholder="What are your thoughts?"
-            minlength=5
-            required></textarea>
+        class="comments--add"
+        novalidate>
+        {{ cForm.hidden_tag() }}
+
+        {{ render_field(cForm.comment, placeholder="What are your thoughts?") }}
+
         <input type="submit"
             value="Comment">
     </form>
@@ -98,12 +98,11 @@
         {% if 'auth' in session %}
         <div class="comments--comment__reply hide">
             <form action="/comment/reply&{{ comment['_id'] }}"
-                method="POST">
-                <textarea name="rcm"
-                    id="rcm"
-                    Placeholder="What are your thoughts?"
-                    minlength=5
-                    required></textarea>
+                method="POST"
+                novalidate>
+                {{ rForm.hidden_tag() }}
+
+                {{ render_field(rForm.reply, placeholder="What are your thoughts?") }}
                 <button type="button"
                     class="comments--comment__reply--cancel">Cancel</button>
                 <input type="submit"
@@ -164,12 +163,11 @@
             {% if 'auth' in session %}
             <div class="comments--reply__rereply hide">
                 <form action="/comment/reply&{{ subcomment['data']['reply_id'] }}"
-                    method="POST">
-                    <textarea name="rcm"
-                        id="rcm"
-                        placeholder="What are your thoughts?"
-                        minlength=5
-                        required></textarea>
+                    method="POST"
+                    novalidate>
+                    {{ rForm.hidden_tag() }}
+
+                    {{ render_field(rForm.reply, placeholder="What are your thoughts?") }}
                     <button type="button"
                         class="comments--reply__rereply--cancel">Cancel</button>
                     <input type="submit"

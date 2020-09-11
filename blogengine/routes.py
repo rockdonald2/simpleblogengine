@@ -1,73 +1,24 @@
-from flask import Flask, request, url_for, redirect, session, abort, jsonify
-from flask_caching import Cache
-from jinja2 import Environment, FileSystemLoader, select_autoescape, Markup
+from blogengine import app, cache, API_URL
+from blogengine.forms import LoginForm, RegistrationForm, CommentForm, ReplyForm, PostForm
+from blogengine.utility import human_format, check_login, get_all_posts
+
+from flask import request, url_for, redirect, session, abort, jsonify, render_template, flash
+from werkzeug.datastructures import MultiDict
+from jinja2 import Markup
 import requests
-import markdown
-import pymdownx
 from bcrypt import hashpw, gensalt
-from os import urandom
-from datetime import datetime, timedelta
-from re import fullmatch, compile
+from datetime import datetime
 from json import dumps
+import uuid
 from anytree import AnyNode, find, LevelOrderIter
 from anytree.exporter import JsonExporter
 from anytree.importer import DictImporter
-import uuid
 
-""" 
-TODO: -
-"""
-
-""" 
-! bug: if the whole comment tree is deleted, the comments still remain there
-? we can solve this bug, by checking every time one parent is going to be deleted that whether the parent's children nodes are also deleted,
-? if so, we can delete the whole tree
-? A partial solution is the one mentioned above, a more thorough solution would be a deep check every time a comment is deleted
-? But, it's widely unnecessary so to say, because it's very unlikely that a whole tree will be deleted
-? The deep-check can be interchanged with a timed deep-check, made possible with a function call
-"""
-
-# * Starting flask application
-app = Flask(__name__)
-app.config['SECRET_KEY'] = urandom(16)
-app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=2)
-# * cache-control
-app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 20
-app.config['CACHE_TYPE'] = 'simple'
-app.config['CACHE_DEFAULT_TIMEOUT'] = 300
-cache = Cache(app)
-# * Cache is only cleared when there's a new comment/deleted comment/deleted post
-# * Cache only works for unlogged users
-
-# * The API can be reached with this endpoint
-API_URL = 'http://127.0.0.1:5000/api/'
 
 # * tree exporter to JSON
 exporter = JsonExporter()
 # * tree importer to Dict
 importer = DictImporter()
-
-# * Environment used in JINJA2 templates
-env = Environment(
-    loader=FileSystemLoader('templates/'),
-    autoescape=select_autoescape(['html'])
-)
-
-# * Extensions for the markdown JINJA2 filter
-extension_configs = {
-    "pymdownx.highlight": {
-        "guess_lang": True,
-        "use_pygments": True,
-        "noclasses": True,
-        "linenums": False
-    }
-}
-extensions = ['meta', 'attr_list', 'wikilinks', 'pymdownx.extra', 'admonition', 'smarty', 'nl2br', 'sane_lists', 'pymdownx.betterem', 'pymdownx.caret', 'pymdownx.critic', 'pymdownx.emoji', 'pymdownx.highlight', 'pymdownx.magiclink', 'pymdownx.mark', 'pymdownx.saneheaders', 'pymdownx.superfences', 'pymdownx.tilde']
-md = markdown.Markdown(extensions=extensions, extension_configs=extension_configs)
-# * the markup constructor creates a safe text that can be inserted into HTML files
-env.filters['markdown'] = lambda text: Markup(md.convert(text))
-env.trim_blocks = True
-env.lstrip_blocks = True
 
 
 @app.errorhandler(404)
@@ -75,25 +26,7 @@ env.lstrip_blocks = True
 @app.errorhandler(500)
 @app.errorhandler(403)
 def error_handler(e):
-    error_template = env.get_template('error.html')
-    return error_template.render(title=str(e))
-
-
-# * cache each opened post for 2 minutes
-# * cache only works for unlogged users, for logged in users the caching mechanism is bypassed
-def check_login():
-    """ 
-    Checks whether the user is logged in or not.
-    Returns True, otherwise False.
-    """
-    return 'auth' in session
-
-# * Cache current posts for 2 minutes
-# * This also results in new posts not appearing for 2 minutes after publishing
-@cache.cached(timeout=120, key_prefix='all_posts', unless=check_login)
-def get_all_posts():
-    posts = requests.get(API_URL + 'posts?projection={"title": 1, "date": 1, "author": 1}&sort=[("date", -1)]').json()['_items']
-    return posts
+    return render_template('error.html', title=str(e))
 
 
 @app.route('/posts', methods=['GET'])
@@ -125,84 +58,71 @@ def home():
     The posts are cached for 2 minutes after loading, for users that aren't logged in.
     """
 
-    home_template = env.get_template('home.html')
-    message = eval(request.args.get('message')) if request.args.get('message') else None 
-    return home_template.render(title='A Simple Blog Engine', session=session, message=message)
-    
+    return render_template('home.html', title='A Simple Blog Engine', session=session)
+
 
 @app.route('/login', methods=['POST', 'GET'])
 def login():
     """
-    Login form where one user can log in, we cannot make users directly from the webpage, it is unnecessary,
+    Login form where one user can log in,
     users are loaded from the mongoDB collection by a GET request.
     The logged in user is saved in session for 2 days.
     If a user refers to this page, after logging in, it automatically redirects the user to the home page,
     with a message
     """
 
-    login_template = env.get_template('login.html')
+    form = LoginForm()
 
     if check_login():
-        return redirect(url_for('home', message={'category': 'gr', 'msg': 'You\'re already logged in!'}))
-    elif request.method == 'GET':
-        return login_template.render(title='Log into your account')
-    elif request.method == 'POST':
-        email = request.form['email']
-        pwd = request.form['pwd']
-       
-        existing_user = requests.get(API_URL + 'users?where={"email":"' + email + '"}').json()['_items']
+        flash('You\'re already logged in!')
+        return redirect(url_for('home'))
+
+    if form.validate_on_submit():
+        existing_user = requests.get(API_URL + 'users?where={"email":"' + form.email.data + '"}').json()['_items']
         if existing_user:
-            if hashpw(pwd.encode('utf-8'), existing_user[0]['pwd'].encode('utf-8')) == existing_user[0]['pwd'].encode('utf-8'):
+            if hashpw(form.password.data.encode('utf-8'), existing_user[0]['pwd'].encode('utf-8')) == existing_user[0]['pwd'].encode('utf-8'):
                 session.permanent = True
-                session['auth'] = (email, existing_user[0]['name'], existing_user[0]['writer'], existing_user[0]['_id'][14:])
-                return redirect(url_for('home', message={'category': 'gr', 'msg': 'You\'ve successfully logged in!'}))
+                session['auth'] = (form.email, existing_user[0]['name'], existing_user[0]['writer'], existing_user[0]['_id'][14:])
 
-        return login_template.render(title='Log into your account', message={'category': 'err', 'msg': 'Invalid login credentials'})
+                flash('You\'ve successfully logged in!', category='succ')
+                return redirect(url_for('home'))
 
+        flash('Invalid credentials', category='err')
+        return render_template('login.html', title='Log into your account')
 
-def validate(p):
-    """ 
-    Validates the argument password to a regexp object, returns a Match object, or None
-    """
-
-    pwd_regexp = compile(r'^.*(?=.{8,})(?=.*[a-zA-Z])(?=.*?[A-Z])(?=.*\d)[a-zA-Z0-9!@£$%^&*()_+={}?:~\[\]]+$')
-    return fullmatch(pwd_regexp, p)
+    return render_template('login.html', title='Log into your account', form=form)
 
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     """
-    Registers a new user, makes a post request to the users collection.
+    Registers a new user, makes a POST request to the users collection.
     """
 
-    register_template = env.get_template('register.html')
+    form = RegistrationForm()
 
     if check_login():
-        return redirect(url_for('home', message={'category': 'gr', 'msg': 'Sign out first before registering a new account'}))
-    elif request.method == 'GET':
-        return register_template.render(title='Register your new account')
-    elif request.method == 'POST':
-        form = request.form
+        flash('Sign out first before registering a new account', category='succ')
+        return redirect(url_for('home'))
 
-        if not validate(form['pwd']):
-            return register_template.render(title='Register your account', message={'category': 'err', 'msg': 'Your password didn\'t match the requested format'})
-        
-        if not (form['pwd'] == form['cpwd']):
-            return register_template.render(title='Register your account', message={'category': 'err', 'msg': 'Passwords do not match'})
-        
+    if form.validate_on_submit():
         user = {
-            'email': form['email'],
-            'name': Markup(form['name']).striptags(),
-            'pwd': hashpw(form['pwd'].encode('utf-8'), gensalt()),
+            'email': form.email.data,
+            'name': Markup(form.name.data).striptags(),
+            'pwd': hashpw(form.password.data.encode('utf-8'), gensalt()),
             'writer': False
         }
 
         resp = requests.post(API_URL + 'users/', user)
 
         if resp.status_code != 201:
-            return redirect(url_for('home', message={'category': 'err', 'msg': 'Something went wrong'}))
+            flash('Something went wrong', category='err')
+            return redirect(url_for('home'))
 
-        return redirect(url_for('home', message={'category': 'gr', 'msg': 'You\'ve have successfully created your account'}))
+        flash('You\'ve successfully created your account, now you can log in!', category='succ')
+        return redirect(url_for('home'))
+
+    return render_template('register.html', title='Register your new account', form=form)
 
 
 @app.route('/logout', methods=['GET'])
@@ -213,20 +133,8 @@ def logout():
     """
 
     session.pop('auth', None)
-    return redirect(url_for('home', message={'category': 'gr', 'msg': 'You\'ve successfully logged out!'}))
-
-
-def human_format(num):
-    """
-    A function that converts a number into a humanly readable format.
-    """
-
-    num = float('{:.3g}'.format(num))
-    magnitude = 0
-    while abs(num) >= 1000:
-        magnitude += 1
-        num /= 1000.0
-    return '{}{}'.format('{:f}'.format(num).rstrip('0').rstrip('.'), ['', 'K', 'M', 'B', 'T'][magnitude])
+    flash('You\'ve successfully logged out!', category='succ')
+    return redirect(url_for('home'))
 
 
 @app.route('/post/<id>', methods=['GET'])
@@ -237,8 +145,22 @@ def post(id):
     Each id is unique.
     """
 
-    post_template = env.get_template('post.html')
-    post_template.globals['human_format'] = human_format
+    # * We need this to "remember" previous errors
+    if 'formdataC' in session:
+        cForm = CommentForm(MultiDict(session['formdataC']))
+        cForm.validate()
+    else:
+        cForm = CommentForm()
+
+    if 'formdataR' in session:
+        rForm = ReplyForm(MultiDict(session['formdataR']))
+        rForm.validate()
+    else:
+        rForm = ReplyForm()
+
+    session.pop('formdataC', None) if 'formdataC' in session else ''
+    session.pop('formdataR', None) if 'formdataR' in session else ''
+
     p = requests.get(API_URL + 'posts/' + id)
 
     if p.status_code == 404:
@@ -249,85 +171,44 @@ def post(id):
     comments = requests.get(API_URL + 'comments?where={"post_id":"' + id + '"}').json()['_items']
     comments.sort(reverse=True, key=lambda c: c['data']['vote'])
 
-    return post_template.render(title=p['title'], post=p, session=session, id=id, comments=comments)
+    return render_template('post.html', title=p['title'], post=p, session=session, id=id, comments=comments, human_format=human_format, cForm=cForm, rForm=rForm)
 
 
-@app.route('/comment&<id>', methods=['GET', 'POST'])
+@app.route('/comment&<id>', methods=['POST'])
 def comment(id):
     """
     Allows the user to post comments, automatically makes a post request to the database.
     After the post refreshes the post uncached with new comments.
     """
 
-    if check_login():
-        if request.method == 'POST':
-            form = request.form
+    form = CommentForm()
 
+    if check_login():
+        if form.validate_on_submit():
             headers = {
                 'Content-Type': 'application/json'
             }
 
             comment = {
                 'author': session['auth'][1],
-                'text': Markup(form['cm']).striptags(),
+                'text': Markup(form.comment.data).striptags(),
                 'date': datetime.today().strftime('%Y.%m.%d - %H:%M')
             }
-            
+
             resp = requests.post(API_URL + 'comments/', exporter.export(AnyNode(data=comment, post_id=id)), headers=headers)
 
             if resp.status_code != 201:
-                return redirect(url_for('home', message={'category': 'err', 'msg': 'Something went wrong'}))
+                flash('Something went wrong')
+                return redirect(url_for('home'))
 
-        cache.clear()
+            cache.clear()
+        elif form.is_submitted() and not form.validate():
+            session['formdataC'] = request.form
+
         return redirect(url_for('post', id=id))
     else:
-        return redirect(url_for('home', message={'category': 'err', 'msg': 'You\'re not logged in to comment on this post'}))
-
-
-def childs_are_deleted(pc):
-    """ 
-    Checks whether a specific parent comment's/reply's child replies are deleted or not.
-    Returns True if they are, otherwise False.
-    """
-
-    # if this array is empty after the iteration, then all of the leafs are deleted
-    check_arr = [reply.data['reply_id'] for reply in LevelOrderIter(pc, filter_= lambda reply: 'reply_id' in reply.data and not reply.data['deleted'] and reply != pc)]
-
-    return len(check_arr) == 0
-
-def deep_check_comments(pc):
-    """ 
-    Checks whether a specific parent comment's child replies are deleted.
-    The pc argument has to be a root element.
-    If the arguments isn't a root element, then it always returns False
-    Returns True if they are, otherwise False.
-    """
-
-    if pc.is_root:
-        return pc.data['deleted'] and childs_are_deleted(pc)
-    else:
-        return False
-
-def make_deep_check():
-    """ 
-    This function has to be called to perform a deep check on comments.
-    This function checks all of the comments from the database, regardless the posts. 
-    """
-
-    comments = requests.get(API_URL + 'comments/').json()['_items']
-
-    for c in comments:
-        # * If the whole tree is deleted, than delete from the database
-        # * Otherwise do nothing
-        if deep_check_comments(importer.import_({
-            'data': c['data'],
-            'post_id': c['post_id'],
-            'children': c['children']
-        })):
-            resp = requests.delete(API_URL + 'comments/' + c['_id'], headers={"If-Match": c['_etag']})
-            
-# ! Now it is left on, which means each time the server is restarted, and first run, the function is called
-make_deep_check()
+        flash('You\'re not logged in to comment on this post', category='err')
+        return redirect(url_for('home'))
 
 
 @app.route('/comment/delete&<id>', methods=['POST'])
@@ -365,12 +246,13 @@ def comment_delete(id):
                     resp = requests.delete(API_URL + 'comments/' + cid, headers=headers)
 
                     if resp.status_code != 204:
-                        return redirect(url_for('home', message={'category': 'err', 'msg': 'Something went wrong'}))
+                        flash('Something went wrong', category='err')
+                        return redirect(url_for('home'))
                 # * Has child replies
                 else:
                     # * Check whether all of its child replies are deleted or not
                     resp = None
-                    
+
                     parentComment = importer.import_(relevant)
 
                     # * If they are, then delete the whole tree
@@ -388,9 +270,11 @@ def comment_delete(id):
                         resp = requests.patch(API_URL + 'comments/' + cid, dumps(edit), headers=headers)
 
                     if resp.status_code != 200 and resp.status_code != 204:
-                        return redirect(url_for('home', message={'category': 'err', 'msg': 'Something went wrong'}))
+                        flash('Something went wrong', category='err')
+                        return redirect(url_for('home'))
             else:
-                return redirect(url_for('home', message={'category': 'err', 'msg': 'You\'re not allowed to do that'}))
+                flash('You\'re not allowed to do that', category='err')
+                return redirect(url_for('home'))
         else:
             # * Post is a reply
 
@@ -410,14 +294,17 @@ def comment_delete(id):
                     resp = requests.put(API_URL + 'comments/' + cid, exporter.export(parentComment), headers=headers)
 
                 if resp.status_code != 200:
-                    return redirect(url_for('home', message={'category': 'err', 'msg': 'Something went wrong'}))
+                    flash('Something went wrong', category='err')
+                    return redirect(url_for('home'))
             else:
-                return redirect(url_for('home', message={'category': 'err', 'msg': 'You\'re not allowed to do that'}))
+                flash('You\'re not allowed to do that', category='err')
+                return redirect(url_for('home'))
 
         cache.clear()
         return '200'
     else:
-        return redirect(url_for('home', message={'category': 'err', 'msg': 'You\'re not allowed to do that'}))
+        flash('You\'re not allowed to do that', category='err')
+        return redirect(url_for('home'))
 
 
 @app.route('/comment/upvote&<id>', methods=['POST'])
@@ -484,11 +371,13 @@ def comment_upvote(id):
         resp = requests.patch(API_URL + 'comments/' + cid, exporter.export(parentComment), headers=headers)
 
         if resp.status_code != 200:
-            return redirect(url_for('home', message={'category': 'err', 'msg': 'Something went wrong'}))
+            flash('Something went wrong', category='err')
+            return redirect(url_for('home'))
 
         return returnCode
     else:
-        return redirect(url_for('home', message={'category': 'err', 'msg': 'You\'re not allowed to vote a comment without logging in first'}))
+        flash('You\'re not allowed to vote on a comment without logging in first', category='err')
+        return redirect(url_for('home'))
 
 
 @app.route('/comment/downvote&<id>', methods=['POST'])
@@ -555,14 +444,16 @@ def comment_downvote(id):
         resp = requests.patch(API_URL + 'comments/' + cid, exporter.export(parentComment), headers=headers)
 
         if resp.status_code != 200:
-            return redirect(url_for('home', message={'category': 'err', 'msg': 'Something went wrong'}))
+            flash('Something went wrong', category='err')
+            return redirect(url_for('home'))
 
         return returnCode
     else:
-        return redirect(url_for('home', message={'category': 'err', 'msg': 'You\'re not allowed to vote a comment without logging in first'}))
+        flash('You\'re not allowed to vote on a comment without logging in first', category='err')
+        return redirect(url_for('home'))
 
 
-@app.route('/comment/reply&<id>', methods=['GET', 'POST'])
+@app.route('/comment/reply&<id>', methods=['POST'])
 def reply_comment(id):
     """
     Allows the user to reply to a specific comment, which will appear on the website hierarchically.
@@ -572,19 +463,20 @@ def reply_comment(id):
     cid = id[:24]
     sid = id[24:] or None
 
+    form = ReplyForm()
+
     if check_login():
         cm = requests.get(API_URL + 'comments/' + cid).json()
 
-        if request.method == 'POST':
+        if form.validate_on_submit():
             relevant = {
                 'data': cm['data'],
                 'post_id': cm['post_id'],
                 'children': cm['children']
             }
-            form = request.form
 
             parentComment = importer.import_(relevant)
-            
+
             if parentComment.children and sid:
                 searchedReply = find(parentComment, lambda reply: 'reply_id' in reply.data and reply.data['reply_id'] == (cid + sid))
             else:
@@ -592,7 +484,7 @@ def reply_comment(id):
 
             reply = {
                 'author': session['auth'][1],
-                'text': Markup(form['rcm']).striptags(),
+                'text': Markup(form.reply.data).striptags(),
                 'date': datetime.today().strftime('%Y.%m.%d - %H:%M'),
                 'reply_id': cid + str(uuid.uuid4()),
                 'deleted': False,
@@ -613,47 +505,53 @@ def reply_comment(id):
             resp = requests.patch(API_URL + 'comments/' + cid, exporter.export(parentComment), headers=headers)
 
             if resp.status_code != 200:
-                return redirect(url_for('home', message={'category': 'err', 'msg': 'Something went wrong'}))
+                flash('Something went wrong', category='err')
+                return redirect(url_for('home'))
 
-        cache.clear()
+            cache.clear()
+        elif form.is_submitted() and not form.validate():
+            session['formdataR'] = request.form
+
         return redirect(url_for('post', id=cm['post_id']))
     else:
-        return redirect(url_for('home', message={'category': 'err', 'msg': 'Sign in first to reply to a comment'}))
+        flash('Sign in first to reply to a comment', category='err')
+        return redirect(url_for('home'))
 
-@app.route('/write', methods=['POST', 'GET'])
+
+@app.route('/write', methods=['GET', 'POST'])
 def write():
     """
     Write route, a logged in user can write new posts, which are automatically POST-ed to the database collection.
     If a not logged in user tries to request this page, the user is automatically redirected to the home page with a message.
     """
 
+    form = PostForm()
+
     if check_login():
-        if request.method == 'POST':
-            form = request.form
-            if form['post'] != '':
-                post = {
-                    'title': Markup(form['title']).striptags(),
-                    'text': form['post'] ,
-                    'date': datetime.today().strftime('%Y.%m.%d'),
-                    'author': session['auth'][1]
-                }
+        if form.validate_on_submit():
+            post = {
+                'title': Markup(form.title.data).striptags(),
+                'text': form.post.data,
+                'date': datetime.today().strftime('%Y.%m.%d'),
+                'author': session['auth'][1]
+            }
 
-                resp = requests.post(API_URL + 'posts/', post)
+            resp = requests.post(API_URL + 'posts/', post)
 
-                if resp.status_code != 201:
-                    return redirect(url_for('home', message={'category': 'err', 'msg': 'Something went wrong'}))
+            if resp.status_code != 201:
+                flash('Something went wrong', category='err')
+                return redirect(url_for('home'))
 
-                return redirect(url_for('home', message={'category': 'gr', 'msg': 'Successfully published the post'}))
-            else:
-                return redirect(url_for('home', message={'category': '', 'msg': 'Your post was empty, it isn\'t published'})) 
+            flash('You\'ve successfully published the post', category='succ')
+            return redirect(url_for('home'))
 
-        write_template = env.get_template('write.html')
-        return write_template.render(title='Write a quick post')
+        return render_template('write.html', title='Write your post', form=form)
     else:
-        return redirect(url_for('home', message={'category': 'err', 'msg': 'You\'re not logged in'}))
+        flash('You\'re not logged in to write a post')
+        return redirect(url_for('home'))
 
 
-@app.route('/edit/<id>', methods=['POST', 'GET'])
+@app.route('/edit/<id>', methods=['GET', 'POST'])
 def edit(id):
     """ 
     A logged in user can edit his own posts which the user created.
@@ -664,34 +562,35 @@ def edit(id):
     post_url = API_URL + 'posts/' + id
     post = requests.get(post_url).json()
 
+    form = PostForm()
+
     if check_login() and session['auth'][1] == post['author']:
-        if request.method == 'GET':
-            edit_template = env.get_template('edit.html')
-            return edit_template.render(title='Edit your post', post=post, id=id)
-        elif request.method == 'POST':
-            form = request.form
-            if form['post'] != '':
-                headers = {
-                    "If-Match": post['_etag']
-                }
+        if form.validate_on_submit():
+            headers = {
+                "If-Match": post['_etag']
+            }
 
-                post = {
-                    "title": Markup(form['title']).striptags(),
-                    "text": form['post']
-                }
+            post = {
+                "title": Markup(form.title.data).striptags(),
+                "text": form.post.data
+            }
 
-                resp = requests.patch(post_url, post, headers=headers)
+            resp = requests.patch(post_url, post, headers=headers)
 
-                if resp.status_code != 200:
-                    return redirect(url_for('home', message={'category': 'err', 'msg': 'Something went wrong'}))
+            if resp.status_code != 200:
+                flash('Something went wrong', category='err')
+                return redirect(url_for('home'))
 
-                return redirect(url_for('home', message={'category': 'gr', 'msg': 'You\'ve successfully edited your posted'}))
-            else:
-                return redirect(url_for('home', message={'category': '', 'msg': 'Your post was empty, it isn\'t published'}))
+            flash('You\'ve successfully editer your post', category='succ')
+            return redirect(url_for('home'))
+
+        return render_template('edit.html', title='Edit your post', post=post, id=id, form=form)
     elif check_login():
-        return redirect(url_for('home', message={'category': 'err', 'msg': 'You\'re not the original author of this post'}))
+        flash('You\'re not the original author of this post', category='err')
+        return redirect(url_for('home'))
     else:
-        return redirect(url_for('home', message={'category': 'err', 'msg': 'You\'re not logged in'}))
+        flash('You\'re not logged in', category='err')
+        return redirect(url_for('home'))
 
 
 @app.route('/delete/<id>', methods=['POST'])
@@ -713,15 +612,13 @@ def delete(id):
         resp = requests.delete(post_url, headers=headers)
 
         if resp.status_code != 204:
-            return redirect(url_for('home', message={'category': 'err', 'msg': 'Something went wrong'}))
+            flash('Something went wrong', category='err')
+            return redirect(url_for('home'))
 
         cache.clear()
-        return redirect(url_for('home', message={'category': 'gr', 'msg': 'Your post was successfully deleted'}))
-    else:
-        return redirect(url_for('home', message={'category': 'err', 'msg': 'You\'re not logged in'}))
-    
 
-# * the program starts here
-if __name__ == '__main__':
-    # ! take out the debug argument
-    app.run(port=8000, debug=True)
+        flash('Your post was successfully deleted', category='succ')
+        return redirect(url_for('home'))
+    else:
+        flash('You\'re not logged in', category='err')
+        return redirect(url_for('home'))
