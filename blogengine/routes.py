@@ -88,7 +88,7 @@ def login():
                 return redirect(url_for('home'))
 
         flash('Invalid credentials', category='err')
-        return render_template('login.html', title='Log into your account')
+        return render_template('login.html', title='Log into your account', form=form)
 
     return render_template('login.html', title='Log into your account', form=form)
 

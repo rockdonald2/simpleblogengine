@@ -145,7 +145,7 @@
         button {
             font-size: $medium-font;
             border: none;
-            border: $link-color 2px solid;
+            border: $link-color 1px solid;
             background-color: transparent;
             padding: .5rem .75rem;
             cursor: pointer;
@@ -556,7 +556,6 @@
                 }
 
                 .form--error {
-                    margin-left: 1rem;
                     margin-bottom: 1rem;
                     margin-top: 0;
                 }

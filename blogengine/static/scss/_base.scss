@@ -16,14 +16,14 @@
 }
 
 html {
-    font-size: 11px; // 1rem
+    font-size: 70%; // 1rem
 
     @include responsive(700px) {
-        font-size: 10px;
+        font-size: 62.5%;
     }
 
     @include responsive(400px) {
-        font-size: 9px;
+        font-size: 50%;
     }
 }
 

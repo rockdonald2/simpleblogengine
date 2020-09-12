@@ -47,6 +47,7 @@ def childs_are_deleted(pc):
 
     return len(check_arr) == 0
 
+
 def deep_check_comments(pc):
     """ 
     Checks whether a specific parent comment's child replies are deleted.
@@ -59,6 +60,7 @@ def deep_check_comments(pc):
         return pc.data['deleted'] and childs_are_deleted(pc)
     else:
         return False
+
 
 def make_deep_check():
     """ 
