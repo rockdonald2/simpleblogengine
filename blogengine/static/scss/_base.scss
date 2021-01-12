@@ -13,6 +13,7 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     color: inherit;
+    font-family: inherit !important;
 }
 
 html {
@@ -30,7 +31,7 @@ html {
 body {
     box-sizing: border-box;
     font-family: 'Open Sans',
-        sans-serif;
+        sans-serif !important;
     background-color: $bg-color;
     line-height: 2;
     color: $font-color;

@@ -2,7 +2,6 @@ from flask import Flask
 from flask_caching import Cache
 from flask_misaka import Misaka
 from json import load
-from os import urandom
 from datetime import timedelta
 
 with open('blogengine/config.json', 'r') as config_file:

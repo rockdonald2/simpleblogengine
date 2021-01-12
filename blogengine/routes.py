@@ -1,6 +1,6 @@
 from blogengine import app, cache, API_URL
 from blogengine.forms import LoginForm, RegistrationForm, CommentForm, ReplyForm, PostForm
-from blogengine.utility import human_format, check_login, get_all_posts
+from blogengine.utility import human_format, check_login, get_all_posts, childs_are_deleted
 
 from flask import request, url_for, redirect, session, abort, jsonify, render_template, flash
 from werkzeug.datastructures import MultiDict
@@ -10,7 +10,7 @@ from bcrypt import hashpw, gensalt
 from datetime import datetime
 from json import dumps
 import uuid
-from anytree import AnyNode, find, LevelOrderIter
+from anytree import AnyNode, find
 from anytree.exporter import JsonExporter
 from anytree.importer import DictImporter
 
@@ -20,6 +20,9 @@ exporter = JsonExporter()
 # * tree importer to Dict
 importer = DictImporter()
 
+# ! Oldd meg a kommentfa problémát, a jelenlegi ötlet, ami eszembejutott, hogy minden törléskor a kommentfa tetejéről indulva ellenőrízze le az összes elágazást, így az utolsó törlésekor az összeset töröltnek
+# ! fogja nézni, megoldva azt a problémát, hogy minden kommentet időközönként megkelljen nézni.
+# ! nézd meg a jegyzetfűzetet is a potenciális megoldással
 
 @app.errorhandler(404)
 @app.errorhandler(405)
@@ -82,7 +85,7 @@ def login():
         if existing_user:
             if hashpw(form.password.data.encode('utf-8'), existing_user[0]['pwd'].encode('utf-8')) == existing_user[0]['pwd'].encode('utf-8'):
                 session.permanent = True
-                session['auth'] = (form.email, existing_user[0]['name'], existing_user[0]['writer'], existing_user[0]['_id'][14:])
+                session['auth'] = (form.email.data, existing_user[0]['name'], existing_user[0]['writer'], existing_user[0]['_id'][14:])
 
                 flash('You\'ve successfully logged in!', category='succ')
                 return redirect(url_for('home'))
@@ -191,6 +194,7 @@ def comment(id):
 
             comment = {
                 'author': session['auth'][1],
+                'author_id': session['auth'][3],
                 'text': Markup(form.comment.data).striptags(),
                 'date': datetime.today().strftime('%Y.%m.%d - %H:%M')
             }
@@ -240,7 +244,7 @@ def comment_delete(id):
 
         if sid == None:
             # * Post is a comment
-            if session['auth'][1] == cm['data']['author'] or session['auth'][1] == postAuthor:
+            if (session['auth'][1] == cm['data']['author'] and session['auth'][3] == cm['data']['author_id']) or session['auth'][1] == postAuthor:
                 # * Has no child replies
                 if not cm['children']:
                     resp = requests.delete(API_URL + 'comments/' + cid, headers=headers)
@@ -258,6 +262,10 @@ def comment_delete(id):
                     # * If they are, then delete the whole tree
                     if childs_are_deleted(parentComment):
                         resp = requests.delete(API_URL + 'comments/' + cid, headers=headers)
+
+                        if resp.status_code != 204:
+                            flash('Something went wrong', category='err')
+                            return redirect(url_for('home'))
                     # * If not, then only change the comments text to deleted
                     else:
                         edit = {
@@ -281,19 +289,48 @@ def comment_delete(id):
             parentComment = importer.import_(relevant)
             searchedReply = find(parentComment, lambda reply: 'reply_id' in reply.data and reply.data['reply_id'] == id)
 
-            if session['auth'][1] == searchedReply.data['author'] or session['auth'][1] == postAuthor:
+            if (session['auth'][1] == searchedReply.data['author'] and session['auth'][3] == searchedReply.data['author_id']) or session['auth'][1] == postAuthor:
                 resp = None
+                searchedParent = searchedReply.parent
 
                 if searchedReply.children and not childs_are_deleted(searchedReply):
                     searchedReply.data['text'] = 'This comment was deleted'
                     searchedReply.data['deleted'] = True
                     resp = requests.patch(API_URL + 'comments/' + cid, exporter.export(parentComment), headers=headers)
                 else:
-                    searchedParent = searchedReply.parent
                     searchedParent.children = tuple(filter(lambda reply: reply.data['reply_id'] != id, searchedParent.children))
-                    resp = requests.put(API_URL + 'comments/' + cid, exporter.export(parentComment), headers=headers)
 
-                if resp.status_code != 200:
+                    # * Check for deleted parent, if parent is deleted, then delete the whole tree
+                    if searchedParent.data['deleted']:
+                        while searchedParent and searchedParent.data['deleted']:
+                            if childs_are_deleted(searchedParent):
+                                # * If a parents' children are all deleted, delete the whole tree
+                                # * We need to check if that parent is a comment or a reply
+                                # * If it has a reply_id field, then it is a reply
+                                if 'reply_id' in searchedParent.data:
+                                    # * If it is a reply, we need to filter that deleted branch
+                                    searchedParent.parent.children = tuple(filter(lambda reply: reply.data['reply_id'] != searchedParent.data['reply_id'], searchedParent.parent.children)) or ()
+                                else:
+                                    # * If not, it is a comment, and we delete it
+                                    resp = requests.delete(API_URL + 'comments/' + cid, headers=headers)
+                                    break
+
+                                searchedParent = searchedParent.parent
+                            else:
+                                break
+
+                        # * If whole tree became empty, because of clearing
+                        if not searchedParent:
+                            resp = requests.delete(API_URL + 'comments/' + cid, headers=headers)
+
+                        if not resp:
+                            # * If we didn't end up at the top of tree, and the comment root isn't deleted we update the root
+                            # * Else, the comment root is already deleted
+                            resp = requests.put(API_URL + 'comments/' + cid, exporter.export(parentComment), headers=headers)
+                    else:
+                        resp = requests.put(API_URL + 'comments/' + cid, exporter.export(parentComment), headers=headers)
+
+                if resp.status_code != 200 and resp.status_code != 204:
                     flash('Something went wrong', category='err')
                     return redirect(url_for('home'))
             else:
@@ -341,21 +378,21 @@ def comment_upvote(id):
 
         returnCode = None
 
-        if session['auth'][0] in relevantComment.data['voted']['upvote']:
-            relevantComment.data['voted']['upvote'].pop(relevantComment.data['voted']['upvote'].index(session['auth'][0]))
+        if session['auth'][3] in relevantComment.data['voted']['upvote']:
+            relevantComment.data['voted']['upvote'].pop(relevantComment.data['voted']['upvote'].index(session['auth'][3]))
             relevantComment.data['vote'] -= 1
             # the post was upvoted, the upvote is cleared - code: 201
 
             returnCode = '201'
-        elif session['auth'][0] in relevantComment.data['voted']['downvote']:
-            relevantComment.data['voted']['downvote'].pop(relevantComment.data['voted']['downvote'].index(session['auth'][0]))
-            relevantComment.data['voted']['upvote'].append(session['auth'][0])
+        elif session['auth'][3] in relevantComment.data['voted']['downvote']:
+            relevantComment.data['voted']['downvote'].pop(relevantComment.data['voted']['downvote'].index(session['auth'][3]))
+            relevantComment.data['voted']['upvote'].append(session['auth'][3])
             relevantComment.data['vote'] += 2
             # the post was downvoted, the user changed it to upvote - code: 202
 
             returnCode = '202'
         else:
-            relevantComment.data['voted']['upvote'].append(session['auth'][0])
+            relevantComment.data['voted']['upvote'].append(session['auth'][3])
             relevantComment.data['vote'] += 1
             # the post wasn't upvoted by the user - code: 200
 
@@ -414,21 +451,21 @@ def comment_downvote(id):
 
         returnCode = None
 
-        if session['auth'][0] in relevantComment.data['voted']['downvote']:
-            relevantComment.data['voted']['downvote'].pop(relevantComment.data['voted']['downvote'].index(session['auth'][0]))
+        if session['auth'][3] in relevantComment.data['voted']['downvote']:
+            relevantComment.data['voted']['downvote'].pop(relevantComment.data['voted']['downvote'].index(session['auth'][3]))
             relevantComment.data['vote'] += 1
             # the post was downvoted, the downvote is cleared - code: 201
 
             returnCode = '201'
-        elif session['auth'][0] in relevantComment.data['voted']['upvote']:
-            relevantComment.data['voted']['upvote'].pop(relevantComment.data['voted']['upvote'].index(session['auth'][0]))
-            relevantComment.data['voted']['downvote'].append(session['auth'][0])
+        elif session['auth'][3] in relevantComment.data['voted']['upvote']:
+            relevantComment.data['voted']['upvote'].pop(relevantComment.data['voted']['upvote'].index(session['auth'][3]))
+            relevantComment.data['voted']['downvote'].append(session['auth'][3])
             relevantComment.data['vote'] -= 2
             # the post was upvoted, the user changed it to downvote - code: 202
 
             returnCode = '202'
         else:
-            relevantComment.data['voted']['downvote'].append(session['auth'][0])
+            relevantComment.data['voted']['downvote'].append(session['auth'][3])
             relevantComment.data['vote'] -= 1
             # the post wasn't downvoted by the user - code: 200
 
@@ -484,6 +521,7 @@ def reply_comment(id):
 
             reply = {
                 'author': session['auth'][1],
+                'author_id': session['auth'][3],
                 'text': Markup(form.reply.data).striptags(),
                 'date': datetime.today().strftime('%Y.%m.%d - %H:%M'),
                 'reply_id': cid + str(uuid.uuid4()),
@@ -533,7 +571,8 @@ def write():
                 'title': Markup(form.title.data).striptags(),
                 'text': form.post.data,
                 'date': datetime.today().strftime('%Y.%m.%d'),
-                'author': session['auth'][1]
+                'author': session['auth'][1],
+                'author_id': session['auth'][3]
             }
 
             resp = requests.post(API_URL + 'posts/', post)
@@ -600,6 +639,7 @@ def delete(id):
     it automatically makes a DELETE request to the database, and simply deletes the associated post.
     If somehow the user tries to reach this route without being logged in, the user is automatically 
     redirected to the home page with an appropriate message.
+    After deleting the post, it makes a search for every comment associated to this post and deletes them.
     """
 
     if check_login():
@@ -614,6 +654,20 @@ def delete(id):
         if resp.status_code != 204:
             flash('Something went wrong', category='err')
             return redirect(url_for('home'))
+
+        comments = requests.get(API_URL + 'comments?where={"post_id":"' + id + '"}').json()['_items']
+        COMMENTS_URL = API_URL + 'comments/'
+
+        for c in comments:
+            comment_headers = {
+                "If-Match": c['_etag']
+            }
+
+            resp = requests.delete(COMMENTS_URL + c['_id'], headers=comment_headers)
+
+            if resp.status_code != 204:
+                flash('Something went wrong', category='err')
+                return redirect(url_for('home'))
 
         cache.clear()
 

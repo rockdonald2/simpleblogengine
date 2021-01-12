@@ -29,7 +29,8 @@ DOMAIN = {
             'title': {'type': 'string', 'minlength': 5, 'maxlength': 90, 'required': True},
             'text': {'type': 'string', 'minlength': 15, 'required': True},
             'date': {'type': 'string', 'required': True},
-            'author': {'type': 'string', 'required': True}
+            'author': {'type': 'string', 'required': True},
+            'author_id': {'type': 'string', 'required': True}
         }
     },
     'users': {
@@ -44,6 +45,7 @@ DOMAIN = {
         'schema': {
             'data': {'type': 'dict', 'required': True, 'schema': {
                 'author': {'type': 'string', 'required': True},
+                'author_id': {'type': 'string', 'required': True},
                 'text': {'type': 'string', 'minlength': 5, 'required': True},
                 'date': {'type': 'string', 'required': True},
                 'deleted': {'type': 'boolean', 'required': True, 'default': False},
