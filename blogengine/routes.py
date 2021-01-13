@@ -566,7 +566,7 @@ def write():
     form = PostForm()
 
     if check_login():
-        if form.validate_on_submit():
+        if form.validate_on_submit() and session['auth'][2]:
             post = {
                 'title': Markup(form.title.data).striptags(),
                 'text': form.post.data,
@@ -603,7 +603,7 @@ def edit(id):
 
     form = PostForm()
 
-    if check_login() and session['auth'][1] == post['author']:
+    if check_login() and session['auth'][1] == post['author'] and session['auth'][3] == post['author_id']:
         if form.validate_on_submit():
             headers = {
                 "If-Match": post['_etag']
@@ -642,9 +642,10 @@ def delete(id):
     After deleting the post, it makes a search for every comment associated to this post and deletes them.
     """
 
-    if check_login():
-        post_url = API_URL + 'posts/' + id
-        post = requests.get(post_url).json()
+    post_url = API_URL + 'posts/' + id
+    post = requests.get(post_url).json()
+
+    if check_login() and session['auth'][1] == post['author'] and session['auth'][3] == post['author_id']:
         headers = {
             "If-Match": post['_etag']
         }
@@ -672,6 +673,9 @@ def delete(id):
         cache.clear()
 
         flash('Your post was successfully deleted', category='succ')
+        return redirect(url_for('home'))
+    elif check_login():
+        flash('You\'re not the original author of this post', category='err')
         return redirect(url_for('home'))
     else:
         flash('You\'re not logged in', category='err')
