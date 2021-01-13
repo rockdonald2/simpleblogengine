@@ -20,10 +20,6 @@ exporter = JsonExporter()
 # * tree importer to Dict
 importer = DictImporter()
 
-# ! Oldd meg a kommentfa problémát, a jelenlegi ötlet, ami eszembejutott, hogy minden törléskor a kommentfa tetejéről indulva ellenőrízze le az összes elágazást, így az utolsó törlésekor az összeset töröltnek
-# ! fogja nézni, megoldva azt a problémát, hogy minden kommentet időközönként megkelljen nézni.
-# ! nézd meg a jegyzetfűzetet is a potenciális megoldással
-
 @app.errorhandler(404)
 @app.errorhandler(405)
 @app.errorhandler(500)
